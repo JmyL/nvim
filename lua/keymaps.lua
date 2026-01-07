@@ -28,3 +28,28 @@ vim.keymap.set('n', '<leader>h', '<cmd>LspClangdSwitchSourceHeader<CR>', { norem
 vim.keymap.set('n', '<leader>x', '<cmd>.lua<CR>', { noremap = true, silent = true })
 vim.keymap.set('v', '<leader>x', "<cmd>'<,'>lua<CR>", { noremap = true, silent = true })
 vim.keymap.set('n', '<leader>X', ':%lua<CR>', { noremap = true, silent = true })
+
+-- clipboard
+vim.keymap.set('n', '<leader>yf', function()
+  local filepath = vim.fn.expand '%:p'
+  vim.fn.setreg('+', filepath)
+  vim.notify('File path copied: ' .. filepath, vim.log.levels.INFO)
+end, { noremap = true, silent = true })
+
+vim.keymap.set('n', '<leader>yn', function()
+  local filename = vim.fn.expand '%:t'
+  vim.fn.setreg('+', filename)
+  vim.notify('File name copied: ' .. filename, vim.log.levels.INFO)
+end, { noremap = true, silent = true })
+
+vim.keymap.set('n', '<leader>ys', function()
+  local filestem = vim.fn.expand '%:t:r'
+  vim.fn.setreg('+', filestem)
+  vim.notify('File stem copied: ' .. filestem, vim.log.levels.INFO)
+end, { noremap = true, silent = true })
+
+vim.keymap.set('n', '<leader>yd', function()
+  local filedir = vim.fn.expand '%:p:h'
+  vim.fn.setreg('+', filedir)
+  vim.notify('Directory path copied: ' .. filedir, vim.log.levels.INFO)
+end, { noremap = true, silent = true })
