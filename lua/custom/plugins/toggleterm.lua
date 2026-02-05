@@ -6,7 +6,7 @@ return {
       open_mapping = [[<M-;>]],
       insert_mappings = false,
       start_in_insert = false,
-      shade_terminals = false,
+      shade_terminals = true,
       shading_factor = -1,
       shading_ratio = -3,
     },
