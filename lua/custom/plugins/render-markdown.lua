@@ -17,5 +17,8 @@ return {
         },
       },
     },
+    config = function()
+      vim.api.nvim_set_hl(0, 'MarkdownBold', { bg = '#A0522D', bold = true })
+    end,
   },
 }
