@@ -17,7 +17,7 @@ return {
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'nightfox', 'dayfox', 'dawnfox', 'duskfox', 'nordfox', 'terafox', 'carbonfox'.
-      vim.cmd.colorscheme 'dayfox'
+      vim.cmd.colorscheme 'nordfox'
     end,
   },
 }
