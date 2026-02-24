@@ -57,11 +57,14 @@ return {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
+        defaults = {
+          preview = {
+            treesitter = false,
+          },
+          -- mappings = {
+          --   i = { ['<c-enter>'] = 'to_fuzzy_refine' },
+          -- },
+        },
         -- pickers = {
         --   find_files = {
         --     theme = 'ivy',
@@ -100,6 +103,13 @@ return {
             -- theme = { }, -- use own theme spec
             -- layout_config = { mirror=true }, -- mirror preview pane
           },
+          fzf = {
+            fuzzy = true, -- false will only do exact matching
+            override_generic_sorter = true, -- override the generic sorter
+            override_file_sorter = true, -- override the file sorter
+            case_mode = 'smart_case', -- or "ignore_case" or "respect_case"
+            -- the default case_mode is "smart_case"
+          },
         },
       }
 
@@ -116,9 +126,10 @@ return {
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>so', builtin.builtin, { desc = '[S]earch with another [O]ption' })
+      vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[s]earch using [t]reesitter query' })
       vim.keymap.set('n', '<leader>sd', builtin.grep_string, { desc = '[S]earch current wor[d]' })
       vim.keymap.set('n', '<leader>s/', function()
-        builtin.live_grep {}
+        require('telescope').extensions.live_grep_args.live_grep_args()
       end, { desc = '[s]earch [/] in all files' })
       vim.keymap.set('n', '<leader>sg', builtin.git_files, { desc = '[S]earch [G]it index' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
