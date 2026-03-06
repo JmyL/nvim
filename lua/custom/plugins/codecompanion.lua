@@ -28,8 +28,21 @@ return {
       keymaps = {
         show_shortcuts = 'g?',
       },
-      strategies = {
+      interactions = {
+        -- background = {
+        --   adapter = {
+        --     name = 'codex',
+        --   },
+        -- },
+        -- inline = {
+        --   adapter = 'codex',
+        -- },
+        -- cmd = {
+        --   adapter = 'codex',
+        -- },
         chat = {
+          -- adapter = 'codex',
+          -- model = 'gpt-5.3-codex',
           slash_commands = {
             ['buffer'] = {
               keymaps = {
@@ -134,50 +147,57 @@ return {
         },
       },
       adapters = {
-        http = {
-          -- openai = function()
-          --   return require('codecompanion.adapters').extend('openai', {
-          --     env = {
-          --       api_key = os.getenv 'OPENAI_API_KEY',
-          --     },
-          --     schema = {
-          --       model = {
-          --         -- default = "claude-3.5-sonnet",
-          --         -- default = "o3-mini-2025-01-31",
-          --         default = 'gpt-4.1o',
-          --         -- default = 'claude-3.7-sonnet',
-          --         -- default = "claude-3.7-sonnet-thought",
-          --         -- default = "gemini-2.0-flash-001",
-          --         -- default = "o1-2024-12-17",
-          --         -- default = "o1-mini-2024-09-12",
-          --       },
-          --       max_tokens = {
-          --         -- default = 9192,
-          --       },
-          --     },
-          --   })
-          -- end,
-          copilot = function()
-            return require('codecompanion.adapters').extend('copilot', {
-              schema = {
-                model = {
-                  -- default = "claude-3.5-sonnet",
-                  -- default = "o3-mini-2025-01-31",
-                  default = 'gpt-5.3-codex',
-                  -- default = 'gpt-4o',
-                  -- default = 'claude-3.7-sonnet',
-                  -- default = "claude-3.7-sonnet-thought",
-                  -- default = "gemini-2.0-flash-001",
-                  -- default = "o1-2024-12-17",
-                  -- default = "o1-mini-2024-09-12",
-                },
-                max_tokens = {
-                  -- default = 9192,
-                },
-              },
+        acp = {
+          codex = function()
+            return require('codecompanion.adapters').extend('codex', {
+              defaults = { auth_method = 'chatgpt' },
             })
           end,
         },
+        -- http = {
+        --   -- openai = function()
+        --   --   return require('codecompanion.adapters').extend('openai', {
+        --   --     env = {
+        --   --       api_key = os.getenv 'OPENAI_API_KEY',
+        --   --     },
+        --   --     schema = {
+        --   --       model = {
+        --   --         -- default = "claude-3.5-sonnet",
+        --   --         -- default = "o3-mini-2025-01-31",
+        --   --         default = 'gpt-4.1o',
+        --   --         -- default = 'claude-3.7-sonnet',
+        --   --         -- default = "claude-3.7-sonnet-thought",
+        --   --         -- default = "gemini-2.0-flash-001",
+        --   --         -- default = "o1-2024-12-17",
+        --   --         -- default = "o1-mini-2024-09-12",
+        --   --       },
+        --   --       max_tokens = {
+        --   --         -- default = 9192,
+        --   --       },
+        --   --     },
+        --   --   })
+        --   -- end,
+        --   copilot = function()
+        --     return require('codecompanion.adapters').extend('copilot', {
+        --       schema = {
+        --         model = {
+        --           -- default = "claude-3.5-sonnet",
+        --           -- default = "o3-mini-2025-01-31",
+        --           default = 'gpt-4.1',
+        --           -- default = 'gpt-4o',
+        --           -- default = 'claude-3.7-sonnet',
+        --           -- default = "claude-3.7-sonnet-thought",
+        --           -- default = "gemini-2.0-flash-001",
+        --           -- default = "o1-2024-12-17",
+        --           -- default = "o1-mini-2024-09-12",
+        --         },
+        --         max_tokens = {
+        --           -- default = 9192,
+        --         },
+        --       },
+        --     })
+        --   end,
+        -- },
       },
       extensions = {
         history = {
@@ -188,7 +208,7 @@ return {
             auto_save = true,
             expiration_days = 0,
             picker = 'telescope', --- ("telescope", "snacks", "fzf-lua", or "default")
-            auto_generate_title = true,
+            auto_generate_title = false,
             title_generation_opts = {
               adapter = nil,
               model = nil,
