@@ -58,6 +58,7 @@ return {
         snack_input_and_execute('Enter title for new note:', 'ObsidianNew')
       end, { desc = '[c]reate new note' })
       vim.keymap.set({ 'v' }, '<leader>oc', '<cmd>ObsidianLink<CR>', { desc = '[c]onnect' })
+      vim.keymap.set({ 'v' }, '<leader>oC', '<cmd>ObsidianLinkNew<CR>', { desc = '[C]reate and connect' })
       vim.keymap.set({ 'n', 'v' }, '<leader>oa', '<cmd>ObsidianTemplate<CR>', { desc = '[a]pply template' })
       vim.keymap.set({ 'n', 'v' }, '<leader>os', '<cmd>ObsidianSearch<CR>', { desc = '[s]earch note' })
       vim.keymap.set({ 'n', 'v' }, '<leader>of', '<cmd>ObsidianQuickSwitch<CR>', { desc = '[f]ind note' })
