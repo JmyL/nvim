@@ -53,3 +53,11 @@ vim.keymap.set('n', '<leader>yd', function()
   vim.fn.setreg('+', filedir)
   vim.notify('Directory path copied: ' .. filedir, vim.log.levels.INFO)
 end, { noremap = true, silent = true })
+
+vim.keymap.set('n', '<leader>yg', function()
+  local filepath = vim.fn.expand '%:p'
+  local git_root = vim.fn.systemlist('git rev-parse --show-toplevel')[1]
+  local relative = filepath:gsub('^' .. git_root .. '/', '')
+  vim.fn.setreg('+', relative)
+  vim.notify('Relative path copied: ' .. relative, vim.log.levels.INFO)
+end, { noremap = true, silent = true })
