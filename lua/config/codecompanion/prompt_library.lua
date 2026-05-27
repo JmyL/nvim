@@ -1,6 +1,6 @@
 return {
   ['Correct grammar'] = {
-    strategy = 'inline',
+    interaction = 'inline',
     description = 'Correct the selected paragraph',
     opts = {
       -- index = 12,
@@ -8,7 +8,7 @@ return {
       is_default = true,
       is_slash_cmd = false,
       modes = { 'v' },
-      short_name = 'correction',
+      alias = 'correction',
       auto_submit = true,
       user_prompt = false,
       stop_context_insertion = true,
@@ -49,6 +49,37 @@ Only make changes necessary for correctness.
         opts = {
           contains_code = true,
         },
+      },
+    },
+  },
+  ['Correct grammar (Chat)'] = {
+    interaction = 'chat',
+    description = 'Correct grammar in the current message',
+    opts = {
+      ignore_system_prompt = true,
+      is_default = false,
+      is_slash_cmd = true,
+      alias = 'correction',
+      auto_submit = false,
+      user_prompt = [[Please paste the text you want corrected.]],
+      stop_context_insertion = true,
+    },
+    prompts = {
+      {
+        role = 'system',
+        content = [[ Please correct grammar and wording while preserving the original meaning and formatting as much as possible.
+Return only the corrected text.
+]],
+        opts = {
+          visible = false,
+        },
+      },
+      {
+        role = 'user',
+        content = [[Correct the following text:
+
+#{user_prompt}
+]],
       },
     },
   },

@@ -17,8 +17,8 @@ return {
           prompt = 'Prompt ', -- Prompt used for interactive LLM calls
           provider = 'telescope', -- Can be "default", "telescope", "fzf_lua", "mini_pick" or "snacks". If not specified, the plugin will autodetect installed providers.
           opts = {
-            show_default_actions = true, -- Show the default actions in the action palette?
-            show_default_prompt_library = true, -- Show the default prompt library in the action palette?
+            show_preset_actions = true, -- Show the preset actions in the action palette?
+            show_preset_prompts = true, -- Show the preset prompts in the action palette?
           },
         },
         chat = {
@@ -41,8 +41,9 @@ return {
         --   adapter = 'codex',
         -- },
         chat = {
-          -- adapter = 'codex',
-          -- model = 'gpt-5.3-codex',
+          adapter = {
+            name = 'opencode',
+          },
           slash_commands = {
             ['buffer'] = {
               keymaps = {
@@ -147,57 +148,13 @@ return {
         },
       },
       adapters = {
-        acp = {
-          codex = function()
-            return require('codecompanion.adapters').extend('codex', {
-              defaults = { auth_method = 'chatgpt' },
-            })
-          end,
-        },
-        -- http = {
-        --   -- openai = function()
-        --   --   return require('codecompanion.adapters').extend('openai', {
-        --   --     env = {
-        --   --       api_key = os.getenv 'OPENAI_API_KEY',
-        --   --     },
-        --   --     schema = {
-        --   --       model = {
-        --   --         -- default = "claude-3.5-sonnet",
-        --   --         -- default = "o3-mini-2025-01-31",
-        --   --         default = 'gpt-4.1o',
-        --   --         -- default = 'claude-3.7-sonnet',
-        --   --         -- default = "claude-3.7-sonnet-thought",
-        --   --         -- default = "gemini-2.0-flash-001",
-        --   --         -- default = "o1-2024-12-17",
-        --   --         -- default = "o1-mini-2024-09-12",
-        --   --       },
-        --   --       max_tokens = {
-        --   --         -- default = 9192,
-        --   --       },
-        --   --     },
-        --   --   })
-        --   -- end,
-        --   copilot = function()
-        --     return require('codecompanion.adapters').extend('copilot', {
-        --       schema = {
-        --         model = {
-        --           -- default = "claude-3.5-sonnet",
-        --           -- default = "o3-mini-2025-01-31",
-        --           default = 'gpt-4.1',
-        --           -- default = 'gpt-4o',
-        --           -- default = 'claude-3.7-sonnet',
-        --           -- default = "claude-3.7-sonnet-thought",
-        --           -- default = "gemini-2.0-flash-001",
-        --           -- default = "o1-2024-12-17",
-        --           -- default = "o1-mini-2024-09-12",
-        --         },
-        --         max_tokens = {
-        --           -- default = 9192,
-        --         },
-        --       },
-        --     })
-        --   end,
-        -- },
+        opencode = function()
+          return require('codecompanion.adapters').extend('opencode', {
+            env = {
+              OPENAI_SYSTEM_PROMPT = "Never use Chinese characters (Hanja/漢字/한자)."
+            },
+          })
+        end,
       },
       extensions = {
         history = {
@@ -215,7 +172,7 @@ return {
               refresh_every_n_prompts = 0, -- e.g., 3 to refresh after every 3rd user prompt
               max_refreshes = 3,
             },
-            continue_last_chat = true,
+            continue_last_chat = false,
             ---When chat is cleared with `gx` delete the chat from history
             delete_on_clearing_chat = false,
             dir_to_save = vim.fn.stdpath 'data' .. '/codecompanion-history',
@@ -231,7 +188,9 @@ return {
         --   },
         -- },
       },
-      language = 'Korean',
+      opts = {
+        language = 'Korean',
+      },
     },
     dependencies = {
       'nvim-lua/plenary.nvim',
@@ -275,11 +234,11 @@ return {
       vim.keymap.set('n', '<leader>aO', ':CodeCompanionChat<CR>', { desc = '[a]i - [O]pen new chat' })
       vim.keymap.set('n', '<leader>ah', ':CodeCompanionHistory<CR>', { desc = '[a]i - [h]istory' })
       vim.keymap.set('v', '<leader>ad', ':CodeCompanionChat Add<CR>', { desc = '[a]i - ad[d] to chat' })
-      vim.keymap.set({ 'n', 'v' }, '<leader>al', ':CodeCompanionAction<CR>', { desc = '[a]i - action [l]ist' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>al', ':CodeCompanionActions<CR>', { desc = '[a]i - action [l]ist' })
       vim.keymap.set({ 'n', 'v' }, '<leader>aL', function()
         vim.api.nvim_feedkeys('V', 'n', false)
         vim.schedule(function()
-          vim.cmd 'CodeCompanionAction'
+          vim.cmd 'CodeCompanionActions'
         end)
       end, { desc = '[a]i - action [L]ist for a file' })
       vim.keymap.set('n', '<leader>ad', function()
