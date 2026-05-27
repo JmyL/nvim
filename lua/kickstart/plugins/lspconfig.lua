@@ -270,6 +270,9 @@ return {
             },
           },
         },
+
+        ts_ls = {},
+        tinymist = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -296,6 +299,7 @@ return {
         'alejandra',
         'buf',
         'gersemi',
+        'gh-actions-language-server',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
