@@ -1,6 +1,7 @@
 return {
   {
     'olimorris/codecompanion.nvim',
+    enabled = false,
     cmd = { 'CodeCompanionChat' },
     lazy = false,
     -- check https://github.com/olimorris/codecompanion.nvim/blob/main/lua/codecompanion/config.lua
@@ -162,7 +163,7 @@ return {
                 model = {
                   -- default = "claude-3.5-sonnet",
                   -- default = "o3-mini-2025-01-31",
-                  default = 'gpt-4.1',
+                  default = 'gpt-5.3-codex',
                   -- default = 'gpt-4o',
                   -- default = 'claude-3.7-sonnet',
                   -- default = "claude-3.7-sonnet-thought",
