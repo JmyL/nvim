@@ -5,25 +5,56 @@ vim.o.relativenumber = true
 vim.o.mouse = 'a'
 vim.o.showmode = false
 -- Sync clipboard between OS and Neovim.
--- Prefer xsel when available: it works on X11 and avoids wl-copy resize/focus flicker
--- with pop-shell on Wayland. Fall back to Neovim's default provider otherwise.
-if vim.fn.executable 'xsel' == 1 and vim.env.DISPLAY then
+-- Locally, use xsel so normal `p` can paste from the system clipboard.
+-- Avoid GUI clipboard tools over SSH, and do not use wl-clipboard because
+-- wl-paste can cause terminal resize issues in this environment.
+local paste_from_unnamed = function()
+  return { vim.fn.getreg('"', 1, true), vim.fn.getregtype '"' }
+end
+
+if not vim.env.SSH_CONNECTION and vim.fn.executable 'xsel' == 1 then
   vim.g.clipboard = {
     name = 'xsel',
     copy = {
-      ['+'] = 'xsel --clipboard --input',
-      ['*'] = 'xsel --primary --input',
+      ['+'] = 'xsel --nodetach -ib',
+      ['*'] = 'xsel --nodetach -ip',
     },
     paste = {
-      ['+'] = 'xsel --clipboard --output',
-      ['*'] = 'xsel --primary --output',
+      ['+'] = 'xsel -ob',
+      ['*'] = 'xsel -op',
     },
-    cache_enabled = 0,
+    cache_enabled = true,
+  }
+elseif vim.env.TMUX then
+  -- In tmux, ask tmux to write its buffer to the terminal/system clipboard.
+  -- Pasting falls back to Neovim's unnamed register because tmux/OSC52 cannot
+  -- generally read the terminal clipboard.
+  vim.g.clipboard = {
+    name = 'tmux-load-buffer',
+    copy = {
+      ['+'] = 'tmux load-buffer -w -',
+      ['*'] = 'tmux load-buffer -w -',
+    },
+    paste = {
+      ['+'] = paste_from_unnamed,
+      ['*'] = paste_from_unnamed,
+    },
+  }
+else
+  vim.g.clipboard = {
+    name = 'osc52',
+    copy = {
+      ['+'] = require('vim.ui.clipboard.osc52').copy '+',
+      ['*'] = require('vim.ui.clipboard.osc52').copy '*',
+    },
+    paste = {
+      ['+'] = paste_from_unnamed,
+      ['*'] = paste_from_unnamed,
+    },
   }
 end
-vim.schedule(function()
-  vim.o.clipboard = 'unnamedplus'
-end)
+
+vim.opt.clipboard = 'unnamedplus'
 vim.o.breakindent = true
 vim.o.undofile = true
 -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
