@@ -26,6 +26,8 @@ vim.keymap.set('v', '<leader>x', "<cmd>'<,'>lua<CR>", { noremap = true, silent =
 vim.keymap.set('n', '<leader>X', ':%lua<CR>', { noremap = true, silent = true })
 
 -- clipboard
+vim.keymap.set('n', 'yc', '0y$', { desc = 'Yank line without newline' })
+
 vim.keymap.set('n', '<leader>yf', function()
   local filepath = vim.fn.expand '%:p'
   vim.fn.setreg('+', filepath)
