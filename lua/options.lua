@@ -8,53 +8,33 @@ vim.o.showmode = false
 -- Locally, use xsel so normal `p` can paste from the system clipboard.
 -- Avoid GUI clipboard tools over SSH, and do not use wl-clipboard because
 -- wl-paste can cause terminal resize issues in this environment.
-local paste_from_unnamed = function()
-  return { vim.fn.getreg('"', 1, true), vim.fn.getregtype '"' }
+
+local osc52 = require 'vim.ui.clipboard.osc52'
+
+local function paste_with_tmux_refresh(reg)
+  return function()
+    if vim.env.TMUX then
+      vim.fn.system { 'tmux', 'refresh-client', '-l' }
+      vim.uv.sleep(100)
+    end
+    return osc52.paste(reg)()
+  end
 end
 
-if not vim.env.SSH_CONNECTION and vim.fn.executable 'xsel' == 1 then
-  vim.g.clipboard = {
-    name = 'xsel',
-    copy = {
-      ['+'] = 'xsel --nodetach -ib',
-      ['*'] = 'xsel --nodetach -ip',
-    },
-    paste = {
-      ['+'] = 'xsel -ob',
-      ['*'] = 'xsel -op',
-    },
-    cache_enabled = true,
-  }
-elseif vim.env.TMUX then
-  -- In tmux, ask tmux to write its buffer to the terminal/system clipboard.
-  -- Pasting falls back to Neovim's unnamed register because tmux/OSC52 cannot
-  -- generally read the terminal clipboard.
-  vim.g.clipboard = {
-    name = 'tmux-load-buffer',
-    copy = {
-      ['+'] = 'tmux load-buffer -w -',
-      ['*'] = 'tmux load-buffer -w -',
-    },
-    paste = {
-      ['+'] = paste_from_unnamed,
-      ['*'] = paste_from_unnamed,
-    },
-  }
-else
-  vim.g.clipboard = {
-    name = 'osc52',
-    copy = {
-      ['+'] = require('vim.ui.clipboard.osc52').copy '+',
-      ['*'] = require('vim.ui.clipboard.osc52').copy '*',
-    },
-    paste = {
-      ['+'] = paste_from_unnamed,
-      ['*'] = paste_from_unnamed,
-    },
-  }
-end
+vim.g.clipboard = {
+  name = 'OSC 52',
+  copy = {
+    ['+'] = osc52.copy '+',
+    ['*'] = osc52.copy '*',
+  },
+  paste = {
+    ['+'] = paste_with_tmux_refresh '+',
+    ['*'] = paste_with_tmux_refresh '*',
+  },
+}
 
 vim.opt.clipboard = 'unnamedplus'
+
 vim.o.breakindent = true
 vim.o.undofile = true
 -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
