@@ -9,6 +9,17 @@ require 'filetypes'
 require 'lazy-bootstrap'
 require 'lazy-plugins'
 
+-- Use open-url wrapper when available, otherwise fall back to xdg-open.
+-- This keeps gx working both inside and outside toolbox/container.
+vim.ui.open = function(url)
+  local open_url = vim.fn.expand('$HOME/.local/bin/open-url')
+  if vim.fn.executable(open_url) == 1 then
+    vim.fn.jobstart({ open_url, url }, { detach = true })
+  else
+    vim.fn.jobstart({ 'xdg-open', url }, { detach = true })
+  end
+end
+
 vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
   pattern = '*.asc',
   callback = function()
@@ -21,7 +32,7 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
       local line = vim.api.nvim_get_current_line()
       local url = line:match 'https://%S+'
       if url then
-        vim.fn.jobstart({ 'xdg-open', url }, { detach = true })
+        vim.ui.open(url)
       else
         print 'No URL found under cursor'
       end
