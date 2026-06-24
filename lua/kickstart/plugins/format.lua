@@ -37,6 +37,7 @@ return {
         nix = { 'alejandra' },
         proto = { 'buf' },
         cmake = { 'gersemi' },
+        markdown = { 'prettier' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
