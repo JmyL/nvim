@@ -37,7 +37,9 @@ return {
         nix = { 'alejandra' },
         proto = { 'buf' },
         cmake = { 'gersemi' },
-        markdown = { 'prettier' },
+        markdown = { 'injected', 'prettier' },
+        c = { 'clang-format' },
+        cpp = { 'clang-format' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -49,9 +51,12 @@ return {
           prepend_args = { '--editorconfig' },
         },
         latexindent = {
-          command = 'latexindent', -- optional, default is 'latexindent'
-          args = { '-' }, -- reads from stdin, writes to stdout
+          command = 'latexindent',
+          args = { '-' },
           stdin = true,
+        },
+        ['clang-format'] = {
+          args = { '--style=LLVM' },
         },
       },
     },
