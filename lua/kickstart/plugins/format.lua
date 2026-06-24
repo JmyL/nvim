@@ -56,7 +56,7 @@ return {
           stdin = true,
         },
         ['clang-format'] = {
-          args = { '--style=LLVM' },
+          args = { '--style=file:' .. vim.fn.expand('~/.clang-format') },
         },
       },
     },
