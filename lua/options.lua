@@ -6,13 +6,34 @@ vim.o.mouse = 'a'
 vim.o.showmode = false
 -- Sync clipboard between OS and Neovim.
 -- Locally, use xsel so normal `p` can paste from the system clipboard.
--- Avoid GUI clipboard tools over SSH, and do not use wl-clipboard because
--- wl-paste can cause terminal resize issues in this environment.
+-- In Herdr, use wl-paste for paste because Herdr does not answer OSC52 read
+-- queries, while OSC52 copy/yank still works well.
 
 local osc52 = require 'vim.ui.clipboard.osc52'
 
-local function paste_with_tmux_refresh(reg)
+local function is_herdr()
+  return vim.env.HERDR_PANE_ID ~= nil or vim.env.HERDR_TAB_ID ~= nil or vim.env.HERDR_WORKSPACE_ID ~= nil
+end
+
+local function wl_paste(reg)
+  local cmd = { 'wl-paste', '--type', 'text/plain;charset=utf-8' }
+  if reg == '*' then
+    table.insert(cmd, '--primary')
+  end
+
+  local lines = vim.fn.systemlist(cmd, '', 1)
+  if vim.v.shell_error ~= 0 then
+    return { '' }, 'v'
+  end
+  return lines, 'v'
+end
+
+local function paste_with_tmux_or_herdr(reg)
   return function()
+    if is_herdr() and vim.fn.executable 'wl-paste' == 1 then
+      return wl_paste(reg)
+    end
+
     if vim.env.TMUX then
       vim.fn.system { 'tmux', 'refresh-client', '-l' }
       vim.uv.sleep(100)
@@ -28,8 +49,8 @@ vim.g.clipboard = {
     ['*'] = osc52.copy '*',
   },
   paste = {
-    ['+'] = paste_with_tmux_refresh '+',
-    ['*'] = paste_with_tmux_refresh '*',
+    ['+'] = paste_with_tmux_or_herdr '+',
+    ['*'] = paste_with_tmux_or_herdr '*',
   },
 }
 
