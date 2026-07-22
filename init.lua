@@ -36,7 +36,7 @@ vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
       else
         print 'No URL found under cursor'
       end
-    end, { buffer = true })
+    end, { buf = 0 })
   end,
 })
 -- require 'config.terminal'
