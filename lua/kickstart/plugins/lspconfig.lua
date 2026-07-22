@@ -260,6 +260,7 @@ return {
 
         ts_ls = {},
         tinymist = {},
+        gh_actions_ls = {},
       }
 
       -- Ensure the servers and tools above are installed
