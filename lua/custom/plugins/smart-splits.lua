@@ -1,4 +1,9 @@
-local tmux_swap_script = vim.fn.expand '~/.tmux/scripts/swap-pane-direction'
+-- Prefer PATH so the same binary works on the host and inside rddev-devenv
+-- (mounted at /usr/local/bin/swap-pane-direction).
+local tmux_swap_script = vim.fn.exepath 'swap-pane-direction'
+if tmux_swap_script == '' then
+  tmux_swap_script = vim.fn.expand '~/.local/bin/swap-pane-direction'
+end
 
 local function has_nvim_win(direction)
   local wincmd = ({ left = 'h', down = 'j', up = 'k', right = 'l' })[direction]
@@ -31,6 +36,14 @@ return {
   {
     'mrjones2014/smart-splits.nvim',
     lazy = false,
+    -- smart-splits only auto-detects tmux via TERM_PROGRAM, which docker exec
+    -- does not forward. TMUX is set (rddev-devenv shim); force the mux so
+    -- @pane-is-vim is set/cleared and edge navigation works in containers.
+    init = function()
+      if vim.env.TMUX and vim.env.TMUX ~= '' then
+        vim.g.smart_splits_multiplexer_integration = 'tmux'
+      end
+    end,
     keys = {
       -- resize splits
       {
