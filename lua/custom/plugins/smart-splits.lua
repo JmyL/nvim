@@ -36,14 +36,6 @@ return {
   {
     'mrjones2014/smart-splits.nvim',
     lazy = false,
-    -- smart-splits only auto-detects tmux via TERM_PROGRAM, which docker exec
-    -- does not forward. TMUX is set (rddev-devenv shim); force the mux so
-    -- @pane-is-vim is set/cleared and edge navigation works in containers.
-    init = function()
-      if vim.env.TMUX and vim.env.TMUX ~= '' then
-        vim.g.smart_splits_multiplexer_integration = 'tmux'
-      end
-    end,
     keys = {
       -- resize splits
       {
