@@ -168,7 +168,7 @@ return {
       -- Desired behavior when the current window is floating:
       -- 'previous' => Focus previous Vim window and perform action
       -- 'mux' => Always forward action to multiplexer
-      float_win_behavior = 'previous',
+      float_win_behavior = 'mux',
       -- when moving cursor between splits left or right,
       -- place the cursor on the same row of the *screen*
       -- regardless of line numbers. False by default.
