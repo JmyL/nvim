@@ -18,7 +18,7 @@ local function swap_or_tmux(direction)
       up = smart_splits.swap_buf_up,
       right = smart_splits.swap_buf_right,
     }
-    swaps[direction]({ move_cursor = true })
+    swaps[direction] { move_cursor = true }
     return
   end
 
@@ -31,6 +31,7 @@ return {
   {
     'mrjones2014/smart-splits.nvim',
     lazy = false,
+    cond = vim.env.HERDR_ENV ~= '1',
     keys = {
       -- resize splits
       {

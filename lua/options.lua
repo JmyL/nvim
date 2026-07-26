@@ -15,6 +15,10 @@ local function is_herdr()
   return vim.env.HERDR_PANE_ID ~= nil or vim.env.HERDR_TAB_ID ~= nil or vim.env.HERDR_WORKSPACE_ID ~= nil
 end
 
+local function is_aerc()
+  return vim.env.AERC_ACCOUNT ~= nil
+end
+
 local function wl_paste(reg)
   local cmd = { 'wl-paste', '--type', 'text/plain;charset=utf-8' }
   if reg == '*' then
@@ -39,7 +43,7 @@ end
 
 local function paste_with_tmux_or_herdr(reg)
   return function()
-    if is_herdr() and vim.fn.executable 'wl-paste' == 1 then
+    if (is_herdr() or is_aerc()) and vim.fn.executable 'wl-paste' == 1 then
       return wl_paste(reg)
     end
 

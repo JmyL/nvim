@@ -125,7 +125,9 @@ return {
       vim.keymap.set('n', '<leader>sH', '<cmd>Telescope helpgrep<CR>', { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', function()
-        builtin.find_files { hidden = true }
+        builtin.find_files {
+          find_command = { 'fd', '--hidden', '--follow', '--type', 'f', '--type', 'l', '--color', 'never' },
+        }
       end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>so', builtin.builtin, { desc = '[S]earch with another [O]ption' })
       vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[s]earch using [t]reesitter query' })
