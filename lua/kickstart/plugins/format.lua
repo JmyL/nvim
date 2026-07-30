@@ -3,6 +3,10 @@ return {
     'stevearc/conform.nvim',
     event = { 'BufWritePre' },
     cmd = { 'ConformInfo' },
+    init = function()
+      -- Format on save off by default; toggle with <leader>tF / <leader>tf
+      vim.g.disable_autoformat = true
+    end,
     keys = {
       {
         '<leader>f',
@@ -62,6 +66,8 @@ return {
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        -- Extensionless scripts (shebang) are usually filetype `sh`, not `bash`.
+        sh = { 'shfmt' },
         bash = { 'shfmt' },
         yaml = { 'prettier' },
         tex = { 'latexindent' },
@@ -80,6 +86,10 @@ return {
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
       formatters = {
+        -- shfmt defaults to tabs; -i 2 uses two spaces (covers extensionless too).
+        shfmt = {
+          prepend_args = { '-i', '2' },
+        },
         prettier = {
           prepend_args = { '--editorconfig' },
         },
