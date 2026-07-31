@@ -69,6 +69,25 @@ vim.o.splitright = true
 vim.o.splitbelow = true
 vim.o.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+
+-- Hide tab glyphs when the buffer uses real tabs for indent; keep them
+-- visible in expandtab buffers so accidental tabs still stand out.
+local function update_listchars()
+  if vim.bo.expandtab then
+    vim.opt_local.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+  else
+    vim.opt_local.listchars = { tab = '  ', trail = '·', nbsp = '␣' }
+  end
+end
+
+vim.api.nvim_create_autocmd({ 'BufWinEnter', 'OptionSet' }, {
+  callback = function(args)
+    if args.event == 'OptionSet' and args.match ~= 'expandtab' then
+      return
+    end
+    update_listchars()
+  end,
+})
 vim.o.inccommand = 'split'
 vim.o.cursorline = true
 vim.o.scrolloff = 10
