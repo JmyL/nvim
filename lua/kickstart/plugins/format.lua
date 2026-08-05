@@ -26,9 +26,7 @@ return {
         '<leader>tf',
         function()
           vim.b.disable_autoformat = not vim.b.disable_autoformat
-          vim.notify(
-            'Autoformat (buffer): ' .. (vim.b.disable_autoformat and 'off' or 'on')
-          )
+          vim.notify('Autoformat (buffer): ' .. (vim.b.disable_autoformat and 'off' or 'on'))
         end,
         desc = '[T]oggle auto[f]ormat (buffer)',
       },
@@ -36,9 +34,7 @@ return {
         '<leader>tF',
         function()
           vim.g.disable_autoformat = not vim.g.disable_autoformat
-          vim.notify(
-            'Autoformat (global): ' .. (vim.g.disable_autoformat and 'off' or 'on')
-          )
+          vim.notify('Autoformat (global): ' .. (vim.g.disable_autoformat and 'off' or 'on'))
         end,
         desc = '[T]oggle auto[F]ormat (global)',
       },
@@ -69,7 +65,9 @@ return {
         -- Extensionless scripts (shebang) are usually filetype `sh`, not `bash`.
         sh = { 'shfmt' },
         bash = { 'shfmt' },
-        yaml = { 'prettier' },
+        -- Prettier always indents block sequences; company/Ansible style does not.
+        yaml = { 'yamlfmt' },
+        ['yaml.github'] = { 'yamlfmt' },
         tex = { 'latexindent' },
         nix = { 'alejandra' },
         proto = { 'buf' },
@@ -90,6 +88,13 @@ return {
         shfmt = {
           prepend_args = { '-i', '2' },
         },
+        -- Match ansible-style lists: `key:\n- item` (no extra indent under the key).
+        yamlfmt = {
+          prepend_args = {
+            '-formatter',
+            'indentless_arrays=true,retain_line_breaks_single=true,include_document_start=true',
+          },
+        },
         prettier = {
           prepend_args = { '--editorconfig' },
         },
@@ -99,7 +104,7 @@ return {
           stdin = true,
         },
         ['clang-format'] = {
-          args = { '--style=file:' .. vim.fn.expand('~/.clang-format') },
+          args = { '--style=file:' .. vim.fn.expand '~/.clang-format' },
         },
       },
     },

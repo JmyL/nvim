@@ -283,6 +283,7 @@ return {
         'shellcheck', -- Used for shell script diagnostics
         'bash-language-server', -- Bash LSP
         'prettier',
+        'yamlfmt',
         'latexindent',
         'alejandra',
         'buf',
