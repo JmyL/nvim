@@ -1,3 +1,13 @@
+-- Default prettier elsewhere; yamlfmt under ~/projects (reads ~/projects/.yamlfmt).
+local function yaml_formatters(bufnr)
+  local path = vim.api.nvim_buf_get_name(bufnr)
+  local root = vim.fs.normalize(vim.fn.expand '~/projects')
+  if path ~= '' and vim.startswith(vim.fs.normalize(path), root .. '/') then
+    return { 'yamlfmt' }
+  end
+  return { 'prettier' }
+end
+
 return {
   { -- Autoformat
     'stevearc/conform.nvim',
@@ -65,9 +75,8 @@ return {
         -- Extensionless scripts (shebang) are usually filetype `sh`, not `bash`.
         sh = { 'shfmt' },
         bash = { 'shfmt' },
-        -- Prettier always indents block sequences; company/Ansible style does not.
-        yaml = { 'yamlfmt' },
-        ['yaml.github'] = { 'yamlfmt' },
+        yaml = yaml_formatters,
+        ['yaml.github'] = yaml_formatters,
         tex = { 'latexindent' },
         nix = { 'alejandra' },
         proto = { 'buf' },
@@ -88,12 +97,11 @@ return {
         shfmt = {
           prepend_args = { '-i', '2' },
         },
-        -- Match ansible-style lists: `key:\n- item` (no extra indent under the key).
+        -- Walk up from the buffer path so ~/projects/.yamlfmt is discovered.
         yamlfmt = {
-          prepend_args = {
-            '-formatter',
-            'indentless_arrays=true,retain_line_breaks_single=true,include_document_start=true',
-          },
+          cwd = function(_, ctx)
+            return vim.fs.dirname(ctx.filename)
+          end,
         },
         prettier = {
           prepend_args = { '--editorconfig' },
