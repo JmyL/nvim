@@ -42,6 +42,8 @@ return {
         'yaml',
         'python',
         'latex',
+        'jinja',
+        'jinja_inline',
       }
       require('nvim-treesitter').install(parsers)
 
