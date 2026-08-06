@@ -44,6 +44,7 @@ return {
         'latex',
         'jinja',
         'jinja_inline',
+        'textproto',
       }
       require('nvim-treesitter').install(parsers)
 
