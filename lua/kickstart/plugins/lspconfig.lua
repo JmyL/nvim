@@ -240,6 +240,10 @@ return {
             },
           },
         },
+        -- ansible-vim uses filetype `ansible` on Neovim (not `yaml.ansible`).
+        ansiblels = {
+          filetypes = { 'ansible', 'yaml.ansible' },
+        },
         jsonls = {},
 
         texlab = {
@@ -289,6 +293,8 @@ return {
         'buf',
         'gersemi',
         'gh-actions-language-server',
+        'ansible-language-server',
+        'ansible-lint',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 

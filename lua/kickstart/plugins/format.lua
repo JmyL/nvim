@@ -77,6 +77,8 @@ return {
         bash = { 'shfmt' },
         yaml = yaml_formatters,
         ['yaml.github'] = yaml_formatters,
+        ['yaml.ansible'] = yaml_formatters,
+        ansible = yaml_formatters,
         tex = { 'latexindent' },
         nix = { 'alejandra' },
         proto = { 'buf' },
