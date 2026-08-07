@@ -22,6 +22,11 @@ return {
     opts = {
       completions = { blink = { enabled = true } },
       file_types = { 'markdown', 'codecompanion' },
+      html = {
+        comment = {
+          conceal = false,
+        },
+      },
       anti_conceal = {
         ignore = {
           head_background = true,
