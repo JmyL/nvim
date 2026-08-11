@@ -19,10 +19,6 @@ return {
         silent = false, -- Disable plugin messages (Config loaded/denied)
         lookup_parents = true, -- Lookup config files in parent directories
       }
-      -- VimEnter can race with lazy "start" plugin load; ensure cwd config is applied.
-      vim.schedule(function()
-        require('config-local').source()
-      end)
     end,
   },
 }
