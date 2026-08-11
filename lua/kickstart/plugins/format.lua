@@ -113,8 +113,10 @@ return {
           args = { '-' },
           stdin = true,
         },
+        -- Discover the nearest project .clang-format (do not pin ~/.clang-format).
         ['clang-format'] = {
-          args = { '--style=file:' .. vim.fn.expand '~/.clang-format' },
+          args = { '-style=file', '-assume-filename', '$FILENAME' },
+          stdin = true,
         },
       },
     },
