@@ -90,7 +90,6 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter', 'OptionSet' }, {
 })
 vim.o.inccommand = 'split'
 vim.o.cursorline = true
--- go-up.nvim sets this to 0 after setup so short files can stick to the window bottom.
 vim.o.scrolloff = 10
 vim.o.confirm = true
 vim.o.wrapscan = false
