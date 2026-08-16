@@ -124,7 +124,7 @@ return {
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp Tag' })
       vim.keymap.set('n', '<leader>sH', '<cmd>Telescope helpgrep<CR>', { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-      vim.keymap.set('n', '<leader>sf', function()
+      vim.keymap.set('n', '<leader>sF', function()
         builtin.find_files { hidden = true }
       end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>so', builtin.builtin, { desc = '[S]earch with another [O]ption' })
@@ -133,7 +133,7 @@ return {
       vim.keymap.set('n', '<leader>s/', function()
         require('telescope').extensions.live_grep_args.live_grep_args()
       end, { desc = '[s]earch [/] in all files' })
-      vim.keymap.set('n', '<leader>sg', builtin.git_files, { desc = '[S]earch [G]it index' })
+      vim.keymap.set('n', '<leader>sf', builtin.git_files, { desc = '[S]earch [G]it index' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
