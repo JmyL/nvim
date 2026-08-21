@@ -77,6 +77,9 @@ return {
           live_grep = {
             additional_args = hidden_grep_args,
           },
+          grep_string = {
+            additional_args = hidden_grep_args,
+          },
         },
         extensions = {
           ['ui-select'] = {
