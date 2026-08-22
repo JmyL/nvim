@@ -7,7 +7,8 @@ vim.o.showmode = false
 -- Sync clipboard between OS and Neovim.
 -- Locally, use xsel so normal `p` can paste from the system clipboard.
 -- In Herdr, use wl-paste for paste because Herdr does not answer OSC52 read
--- queries, while OSC52 copy/yank still works well.
+-- queries. For copy/yank, call the real wl-copy directly so it does not go
+-- through ~/.local/bin/wl-copy, which dedents Herdr copy-mode text.
 
 local osc52 = require 'vim.ui.clipboard.osc52'
 
@@ -41,6 +42,42 @@ local function wl_paste(reg)
   return lines, 'v'
 end
 
+local function real_wl_copy()
+  for _, path in ipairs { '/usr/bin/wl-copy', '/bin/wl-copy' } do
+    if vim.fn.executable(path) == 1 then
+      return path
+    end
+  end
+  return nil
+end
+
+local function wl_copy(reg)
+  return function(lines, regtype)
+    local cmd = { real_wl_copy(), '--type', 'text/plain;charset=utf-8' }
+    if cmd[1] == nil then
+      return osc52.copy(reg)(lines, regtype)
+    end
+    if reg == '*' then
+      table.insert(cmd, '--primary')
+    end
+
+    local text = table.concat(lines, '\n')
+    if regtype == 'V' then
+      text = text .. '\n'
+    end
+    vim.fn.system(cmd, text)
+  end
+end
+
+local function copy_with_tmux_or_herdr(reg)
+  return function(lines, regtype)
+    if is_herdr() then
+      return wl_copy(reg)(lines, regtype)
+    end
+    return osc52.copy(reg)(lines, regtype)
+  end
+end
+
 local function paste_with_tmux_or_herdr(reg)
   return function()
     if (is_herdr() or is_aerc()) and vim.fn.executable 'wl-paste' == 1 then
@@ -58,8 +95,8 @@ end
 vim.g.clipboard = {
   name = 'OSC 52',
   copy = {
-    ['+'] = osc52.copy '+',
-    ['*'] = osc52.copy '*',
+    ['+'] = copy_with_tmux_or_herdr '+',
+    ['*'] = copy_with_tmux_or_herdr '*',
   },
   paste = {
     ['+'] = paste_with_tmux_or_herdr '+',
