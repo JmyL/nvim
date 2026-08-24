@@ -16,16 +16,19 @@ local function is_herdr()
 end
 
 local function wl_paste(reg)
-  local cmd = { 'wl-paste', '--type', 'text/plain;charset=utf-8' }
+  -- wl-paste appends a newline unless --no-newline is set; Neovim's
+  -- builtin provider uses the same flag so `p` stays characterwise.
+  local cmd = { 'wl-paste', '--no-newline', '--type', 'text/plain;charset=utf-8' }
   if reg == '*' then
     table.insert(cmd, '--primary')
   end
 
   local lines = vim.fn.systemlist(cmd, '', 1)
   if vim.v.shell_error ~= 0 then
-    return { '' }, 'v'
+    return { { '' }, 'v' }
   end
-  return lines, 'v'
+  local regtype = (#lines > 0 and lines[#lines] == '') and 'V' or 'v'
+  return { lines, regtype }
 end
 
 local function paste_with_tmux_or_herdr(reg)
