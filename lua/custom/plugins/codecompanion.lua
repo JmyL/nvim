@@ -251,8 +251,8 @@ return {
       vim.api.nvim_create_autocmd('FileType', {
         pattern = 'codecompanion',
         callback = function()
-          vim.keymap.set('n', '[a', '?^## CodeCompanion<CR>', { buffer = true })
-          vim.keymap.set('n', ']a', '/^## CodeCompanion<CR>', { buffer = true })
+          vim.keymap.set('n', '[a', '?^## CodeCompanion<CR>', { buf = 0 })
+          vim.keymap.set('n', ']a', '/^## CodeCompanion<CR>', { buf = 0 })
         end,
       })
       -- vim.g.codecompanion_auto_tool_mode = true

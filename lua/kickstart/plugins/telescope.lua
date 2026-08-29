@@ -53,6 +53,9 @@ return {
       -- See `:help telescope` and `:help telescope.setup()`
       local builtin = require 'telescope.builtin'
       local lga_actions = require 'telescope-live-grep-args.actions'
+      local hidden_grep_args = { '--hidden', '--glob', '!.git/' }
+      local vimgrep_arguments = vim.deepcopy(require('telescope.config').values.vimgrep_arguments)
+      vim.list_extend(vimgrep_arguments, hidden_grep_args)
       require('telescope').setup {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
@@ -72,9 +75,10 @@ return {
         -- },
         pickers = {
           live_grep = {
-            -- additional_args = function()
-            --   return { '--case-sensitive' }
-            -- end,
+            additional_args = hidden_grep_args,
+          },
+          grep_string = {
+            additional_args = hidden_grep_args,
           },
         },
         extensions = {
@@ -89,6 +93,7 @@ return {
           },
           live_grep_args = {
             auto_quoting = true, -- enable/disable auto-quoting
+            vimgrep_arguments = vimgrep_arguments,
             -- define mappings, e.g.
             mappings = { -- extend mappings
               i = {
@@ -135,7 +140,6 @@ return {
       vim.keymap.set('n', '<leader>s/', function()
         require('telescope').extensions.live_grep_args.live_grep_args()
       end, { desc = '[s]earch [/] in all files' })
-      vim.keymap.set('n', '<leader>sg', builtin.git_files, { desc = '[S]earch [G]it index' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })

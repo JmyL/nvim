@@ -1,7 +1,7 @@
 return {
   {
     'github/copilot.vim',
-    enable = false,
+    enabled = false,
     lazy = true,
     cmd = 'Copilot',
     event = 'InsertEnter',

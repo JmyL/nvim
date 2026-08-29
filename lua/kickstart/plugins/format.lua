@@ -1,8 +1,22 @@
+-- Default prettier elsewhere; yamlfmt under ~/projects (reads ~/projects/.yamlfmt).
+local function yaml_formatters(bufnr)
+  local path = vim.api.nvim_buf_get_name(bufnr)
+  local root = vim.fs.normalize(vim.fn.expand '~/projects')
+  if path ~= '' and vim.startswith(vim.fs.normalize(path), root .. '/') then
+    return { 'yamlfmt' }
+  end
+  return { 'prettier' }
+end
+
 return {
   { -- Autoformat
     'stevearc/conform.nvim',
     event = { 'BufWritePre' },
     cmd = { 'ConformInfo' },
+    init = function()
+      -- Format on save off by default; toggle with <leader>tF / <leader>tf
+      vim.g.disable_autoformat = true
+    end,
     keys = {
       {
         '<leader>f',
@@ -18,10 +32,31 @@ return {
         mode = '',
         desc = '[F]ormat buffer',
       },
+      {
+        '<leader>tf',
+        function()
+          vim.b.disable_autoformat = not vim.b.disable_autoformat
+          vim.notify('Autoformat (buffer): ' .. (vim.b.disable_autoformat and 'off' or 'on'))
+        end,
+        desc = '[T]oggle auto[f]ormat (buffer)',
+      },
+      {
+        '<leader>tF',
+        function()
+          vim.g.disable_autoformat = not vim.g.disable_autoformat
+          vim.notify('Autoformat (global): ' .. (vim.g.disable_autoformat and 'off' or 'on'))
+        end,
+        desc = '[T]oggle auto[F]ormat (global)',
+      },
     },
     opts = {
       notify_on_error = false,
       format_on_save = function(bufnr)
+        -- :lua vim.g.disable_autoformat = true  -- all buffers
+        -- :lua vim.b.disable_autoformat = true  -- current buffer
+        if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+          return nil
+        end
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
@@ -37,8 +72,13 @@ return {
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        -- Extensionless scripts (shebang) are usually filetype `sh`, not `bash`.
+        sh = { 'shfmt' },
         bash = { 'shfmt' },
-        yaml = { 'prettier' },
+        yaml = yaml_formatters,
+        ['yaml.github'] = yaml_formatters,
+        ['yaml.ansible'] = yaml_formatters,
+        ansible = yaml_formatters,
         tex = { 'latexindent' },
         nix = { 'alejandra' },
         proto = { 'buf' },
@@ -55,6 +95,16 @@ return {
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
       formatters = {
+        -- shfmt defaults to tabs; -i 2 uses two spaces (covers extensionless too).
+        shfmt = {
+          prepend_args = { '-i', '2' },
+        },
+        -- Walk up from the buffer path so ~/projects/.yamlfmt is discovered.
+        yamlfmt = {
+          cwd = function(_, ctx)
+            return vim.fs.dirname(ctx.filename)
+          end,
+        },
         prettier = {
           prepend_args = { '--editorconfig' },
         },
@@ -63,8 +113,10 @@ return {
           args = { '-' },
           stdin = true,
         },
+        -- Discover the nearest project .clang-format (do not pin ~/.clang-format).
         ['clang-format'] = {
-          args = { '--style=file:' .. vim.fn.expand('~/.clang-format') },
+          args = { '-style=file', '-assume-filename', '$FILENAME' },
+          stdin = true,
         },
       },
     },

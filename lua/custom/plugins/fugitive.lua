@@ -7,6 +7,9 @@ return {
     },
     silent = true,
     config = function()
+      -- Fixed-width author so :Gclog subjects stay aligned.
+      vim.g.fugitive_summary_format = '%<(20,trunc)%an %s'
+
       local git_status_cursors = {}
 
       local group = vim.api.nvim_create_augroup('fugitive_cursor_restore', { clear = true })

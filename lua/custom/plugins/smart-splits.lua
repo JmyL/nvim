@@ -1,4 +1,9 @@
-local tmux_swap_script = vim.fn.expand '~/.tmux/scripts/swap-pane-direction'
+-- Prefer PATH so the same binary works on the host and inside rddev-devenv
+-- (mounted at /usr/local/bin/swap-pane-direction).
+local tmux_swap_script = vim.fn.exepath 'swap-pane-direction'
+if tmux_swap_script == '' then
+  tmux_swap_script = vim.fn.expand '~/.local/bin/swap-pane-direction'
+end
 
 local function has_nvim_win(direction)
   local wincmd = ({ left = 'h', down = 'j', up = 'k', right = 'l' })[direction]

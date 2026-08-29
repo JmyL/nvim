@@ -1,6 +1,9 @@
 return {
   {
     'klen/nvim-config-local',
+    -- Must load at startup so project .nvim.lua is available for C++ LSP overrides.
+    lazy = false,
+    priority = 1000,
     config = function()
       require('config-local').setup {
         -- Default options (optional)

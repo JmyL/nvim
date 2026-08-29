@@ -21,14 +21,16 @@ local function is_aerc()
 end
 
 local function wl_paste(reg)
-  local cmd = { 'wl-paste', '--type', 'text/plain;charset=utf-8' }
+  -- wl-paste appends a newline unless --no-newline is set; Neovim's
+  -- builtin provider uses the same flag so `p` stays characterwise.
+  local cmd = { 'wl-paste', '--no-newline', '--type', 'text/plain;charset=utf-8' }
   if reg == '*' then
     table.insert(cmd, '--primary')
   end
 
   local raw = vim.fn.system(cmd)
   if vim.v.shell_error ~= 0 then
-    return { '' }, 'v'
+    return { { '' }, 'v' }
   end
 
   local lines = vim.split(raw, '\n', { plain = true, trimempty = false })
@@ -36,10 +38,10 @@ local function wl_paste(reg)
     if lines[#lines] == '' then
       table.remove(lines, #lines)
     end
-    return lines, 'V'
+    return { lines, 'V' }
   end
 
-  return lines, 'v'
+  return { lines, 'v' }
 end
 
 local function real_wl_copy()
@@ -119,6 +121,25 @@ vim.o.splitright = true
 vim.o.splitbelow = true
 vim.o.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+
+-- Hide tab glyphs when the buffer uses real tabs for indent; keep them
+-- visible in expandtab buffers so accidental tabs still stand out.
+local function update_listchars()
+  if vim.bo.expandtab then
+    vim.opt_local.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+  else
+    vim.opt_local.listchars = { tab = '  ', trail = '·', nbsp = '␣' }
+  end
+end
+
+vim.api.nvim_create_autocmd({ 'BufWinEnter', 'OptionSet' }, {
+  callback = function(args)
+    if args.event == 'OptionSet' and args.match ~= 'expandtab' then
+      return
+    end
+    update_listchars()
+  end,
+})
 vim.o.inccommand = 'split'
 vim.o.cursorline = true
 vim.o.scrolloff = 10
