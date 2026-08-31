@@ -107,20 +107,20 @@ vim.keymap.set('n', '<leader>yg', function()
   copy_plus(relative, 'Relative path copied: ' .. relative)
 end, { noremap = true, silent = true, desc = '[y]ank [g]it-relative path' })
 
-vim.keymap.set('n', '<leader>yc', function()
-  local line = vim.fn.line '.'
-  yank_cite(line, line)
-end, { noremap = true, silent = true, desc = '[y]ank [c]ite (path:line)' })
-
-vim.keymap.set('v', '<leader>yc', function()
-  yank_cite(visual_line_range())
-end, { noremap = true, silent = true, desc = '[y]ank [c]ite (path:line)' })
-
 vim.keymap.set('n', '<leader>ya', function()
   local line = vim.fn.line '.'
-  yank_snippet(line, line)
-end, { noremap = true, silent = true, desc = '[y]ank [a]gent snippet' })
+  yank_cite(line, line)
+end, { noremap = true, silent = true, desc = '[y]ank [a]rea (path:line)' })
 
 vim.keymap.set('v', '<leader>ya', function()
+  yank_cite(visual_line_range())
+end, { noremap = true, silent = true, desc = '[y]ank [a]rea (path:line)' })
+
+vim.keymap.set('n', '<leader>yc', function()
+  local line = vim.fn.line '.'
+  yank_snippet(line, line)
+end, { noremap = true, silent = true, desc = '[y]ank [c]opy (snippet)' })
+
+vim.keymap.set('v', '<leader>yc', function()
   yank_snippet(visual_line_range())
-end, { noremap = true, silent = true, desc = '[y]ank [a]gent snippet' })
+end, { noremap = true, silent = true, desc = '[y]ank [c]opy (snippet)' })
