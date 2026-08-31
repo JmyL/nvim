@@ -44,6 +44,7 @@ require('lazy').setup({
         { '<leader>t', group = '[t]oggle' },
         { '<leader>g', group = '[g]it', mode = { 'n', 'v' } },
         { '<leader>a', group = '[a]i', mode = { 'n', 'v' } },
+        { '<leader>y', group = '[y]ank', mode = { 'n', 'v' } },
       },
     },
   },
