@@ -20,7 +20,6 @@ return {
         callback = function()
           local bufname = vim.fn.bufname()
           git_status_cursors[bufname] = vim.fn.line '.'
-          print('BufLeave: Saved cursor position for', bufname, ':', git_status_cursors[bufname])
         end,
       })
 
@@ -30,10 +29,7 @@ return {
         callback = function()
           local bufname = vim.fn.bufname()
           if git_status_cursors[bufname] then
-            print('BufEnter: Restoring cursor position for', bufname, ':', git_status_cursors[bufname])
             vim.cmd('normal! ' .. git_status_cursors[bufname] .. 'G')
-          else
-            print('BufEnter: No cursor position to restore for', bufname)
           end
         end,
       })
