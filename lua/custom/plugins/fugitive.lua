@@ -1,9 +1,30 @@
+-- :Git follows the current file's repo. Keep the directory Neovim was
+-- started in so <leader>gs can still open that clone after editing a
+-- file outside it (oil/:cd must not steal this).
+local launch_cwd = vim.fn.getcwd()
+
+local function git_status(dir)
+  local git_dir = vim.fn.FugitiveExtractGitDir(dir)
+  if git_dir == '' then
+    vim.notify('No git repository in ' .. dir, vim.log.levels.WARN)
+    return
+  end
+  vim.cmd(vim.fn['fugitive#Command'](0, 0, 0, 0, '', '++curwin', git_dir))
+end
+
 return {
   {
     'tpope/vim-fugitive',
     lazy = false,
     keys = {
-      { '<leader>gs', ':0Git<CR>', desc = '[G]it [s]tatus' },
+      {
+        '<leader>gs',
+        function()
+          git_status(launch_cwd)
+        end,
+        desc = '[G]it [s]tatus',
+      },
+      { '<leader>gS', ':0Git<CR>', desc = '[G]it [S]tatus (file repo)' },
     },
     silent = true,
     config = function()
