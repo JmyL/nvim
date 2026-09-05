@@ -1,9 +1,30 @@
+-- :Git follows the current file's repo. Keep the directory Neovim was
+-- started in so <leader>gs can still open that clone after editing a
+-- file outside it (oil/:cd must not steal this).
+local launch_cwd = vim.fn.getcwd()
+
+local function git_status(dir)
+  local git_dir = vim.fn.FugitiveExtractGitDir(dir)
+  if git_dir == '' then
+    vim.notify('No git repository in ' .. dir, vim.log.levels.WARN)
+    return
+  end
+  vim.cmd(vim.fn['fugitive#Command'](0, 0, 0, 0, '', '++curwin', git_dir))
+end
+
 return {
   {
     'tpope/vim-fugitive',
     lazy = false,
     keys = {
-      { '<leader>gs', ':0Git<CR>', desc = '[G]it [s]tatus' },
+      {
+        '<leader>gs',
+        function()
+          git_status(launch_cwd)
+        end,
+        desc = '[G]it [s]tatus',
+      },
+      { '<leader>gS', ':0Git<CR>', desc = '[G]it [S]tatus (file repo)' },
     },
     silent = true,
     config = function()
@@ -14,13 +35,26 @@ return {
 
       local group = vim.api.nvim_create_augroup('fugitive_cursor_restore', { clear = true })
 
+      -- Fugitive's <CR> is Gedit, which calls BlurStatus: leave the status
+      -- window, or :new a split if there is no other usable window. :0Git
+      -- already occupies the current window; open the file there instead.
+      vim.api.nvim_create_autocmd('FileType', {
+        group = group,
+        pattern = 'fugitive',
+        callback = function()
+          vim.keymap.set('n', '<CR>', function()
+            pcall(vim.api.nvim_win_del_var, 0, 'fugitive_status')
+            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Plug>fugitive:<CR>', true, false, true), 'm', false)
+          end, { buffer = true, silent = true, desc = 'Open file in current window' })
+        end,
+      })
+
       vim.api.nvim_create_autocmd('BufLeave', {
         group = group,
         pattern = 'fugitive://*.git//',
         callback = function()
           local bufname = vim.fn.bufname()
           git_status_cursors[bufname] = vim.fn.line '.'
-          print('BufLeave: Saved cursor position for', bufname, ':', git_status_cursors[bufname])
         end,
       })
 
@@ -30,10 +64,7 @@ return {
         callback = function()
           local bufname = vim.fn.bufname()
           if git_status_cursors[bufname] then
-            print('BufEnter: Restoring cursor position for', bufname, ':', git_status_cursors[bufname])
             vim.cmd('normal! ' .. git_status_cursors[bufname] .. 'G')
-          else
-            print('BufEnter: No cursor position to restore for', bufname)
           end
         end,
       })
