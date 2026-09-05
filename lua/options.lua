@@ -28,20 +28,12 @@ local function wl_paste(reg)
     table.insert(cmd, '--primary')
   end
 
-  local raw = vim.fn.system(cmd)
+  local lines = vim.fn.systemlist(cmd, '', 1)
   if vim.v.shell_error ~= 0 then
     return { { '' }, 'v' }
   end
-
-  local lines = vim.split(raw, '\n', { plain = true, trimempty = false })
-  if raw ~= '' and raw:sub(-1) == '\n' then
-    if lines[#lines] == '' then
-      table.remove(lines, #lines)
-    end
-    return { lines, 'V' }
-  end
-
-  return { lines, 'v' }
+  local regtype = (#lines > 0 and lines[#lines] == '') and 'V' or 'v'
+  return { lines, regtype }
 end
 
 local function real_wl_copy()

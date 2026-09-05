@@ -5,7 +5,8 @@ return {
     lazy = false,
     priority = 1000,
     config = function()
-      require('config-local').setup {
+      local config_local = require 'config-local'
+      config_local.setup {
         -- Default options (optional)
 
         -- Config file patterns to load (lua supported)
@@ -19,6 +20,11 @@ return {
         silent = false, -- Disable plugin messages (Config loaded/denied)
         lookup_parents = true, -- Lookup config files in parent directories
       }
+
+      -- lazy.nvim may configure this plugin during or after VimEnter. In both
+      -- cases, schedule one explicit initial source so the first buffer is not
+      -- missed by config-local's VimEnter autocmd.
+      vim.schedule(config_local.source)
     end,
   },
 }
