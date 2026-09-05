@@ -20,11 +20,6 @@ return {
         silent = false, -- Disable plugin messages (Config loaded/denied)
         lookup_parents = true, -- Lookup config files in parent directories
       }
-
-      -- lazy.nvim may configure this plugin during or after VimEnter. In both
-      -- cases, schedule one explicit initial source so the first buffer is not
-      -- missed by config-local's VimEnter autocmd.
-      vim.schedule(config_local.source)
     end,
   },
 }
