@@ -80,6 +80,58 @@ local function yank_snippet(start_line, end_line)
   copy_plus(text, 'Copied ' .. header)
 end
 
+local function github_repo_slug(remote)
+  remote = remote:gsub('%s+$', ''):gsub('%.git$', ''):gsub('/+$', '')
+  return remote:match 'github%.com[:/]([^/]+/[^/]+)$'
+end
+
+local function yank_github_file_url()
+  local abs = vim.fn.expand '%:p'
+  if abs == '' then
+    vim.notify('No file to link', vim.log.levels.WARN)
+    return
+  end
+
+  local dir = vim.fn.expand '%:p:h'
+  local root = vim.fn.systemlist({ 'git', '-C', dir, 'rev-parse', '--show-toplevel' })[1]
+  if vim.v.shell_error ~= 0 or not root then
+    vim.notify('Not in a git repository', vim.log.levels.WARN)
+    return
+  end
+  if abs:sub(1, #root) ~= root then
+    vim.notify('File is not inside the git repository', vim.log.levels.WARN)
+    return
+  end
+
+  local relpath = abs:sub(#root + 2)
+  vim.fn.system { 'git', '-C', root, 'ls-files', '--error-unmatch', '--', relpath }
+  if vim.v.shell_error ~= 0 then
+    vim.notify('File is not tracked by git', vim.log.levels.WARN)
+    return
+  end
+
+  local remote = vim.fn.systemlist({ 'git', '-C', root, 'remote', 'get-url', 'origin' })[1]
+  if vim.v.shell_error ~= 0 or not remote then
+    vim.notify('No git remote named origin', vim.log.levels.WARN)
+    return
+  end
+
+  local slug = github_repo_slug(remote)
+  if not slug then
+    vim.notify('origin is not a GitHub remote', vim.log.levels.WARN)
+    return
+  end
+
+  local branch = vim.fn.systemlist({ 'git', '-C', root, 'rev-parse', '--abbrev-ref', 'HEAD' })[1]
+  if vim.v.shell_error ~= 0 or not branch or branch == '' then
+    vim.notify('Could not determine current branch', vim.log.levels.WARN)
+    return
+  end
+
+  local url = string.format('https://github.com/%s/blob/%s/%s', slug, branch, relpath)
+  copy_plus(url, 'GitHub link copied: ' .. url)
+end
+
 vim.keymap.set('n', 'yc', '0y$', { desc = 'Yank line without newline' })
 
 vim.keymap.set('n', '<leader>yf', function()
@@ -106,6 +158,8 @@ vim.keymap.set('n', '<leader>yg', function()
   local relative = git_relpath()
   copy_plus(relative, 'Relative path copied: ' .. relative)
 end, { noremap = true, silent = true, desc = '[y]ank [g]it-relative path' })
+
+vim.keymap.set('n', '<leader>yh', yank_github_file_url, { noremap = true, silent = true, desc = '[y]ank Git[h]ub file link' })
 
 vim.keymap.set('n', '<leader>ya', function()
   local line = vim.fn.line '.'
