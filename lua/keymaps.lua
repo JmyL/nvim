@@ -132,6 +132,47 @@ local function yank_github_file_url()
   copy_plus(url, 'GitHub link copied: ' .. url)
 end
 
+local function git_rev_parse(rev)
+  local cmd = { 'git' }
+  if vim.fn.exists '*FugitiveGitDir' == 1 then
+    local git_dir = vim.fn.FugitiveGitDir()
+    if type(git_dir) == 'string' and git_dir ~= '' then
+      table.insert(cmd, '--git-dir=' .. git_dir)
+    end
+  end
+  vim.list_extend(cmd, { 'rev-parse', '--verify', '--end-of-options', rev .. '^{commit}' })
+  local sha = vim.fn.systemlist(cmd)[1]
+  if vim.v.shell_error ~= 0 or not sha or sha == '' then
+    return nil
+  end
+  return sha
+end
+
+local function yank_commit_id()
+  local line = vim.fn.getline '.'
+  local line_sha = line:match '^commit%s+(%x+)' or line:match '^tag%s+(%x+)' or line:match '^(%x+)'
+  local buf_sha = vim.fn.expand '%:t'
+  local cword = vim.fn.expand '<cword>'
+  local rev
+  if line_sha and #line_sha >= 7 then
+    rev = line_sha
+  elseif buf_sha:match '^%x+$' and #buf_sha >= 7 then
+    rev = buf_sha
+  elseif cword:match '^%x+$' and #cword >= 7 then
+    rev = cword
+  else
+    vim.notify('No commit id on this line', vim.log.levels.WARN)
+    return
+  end
+
+  local sha = git_rev_parse(rev)
+  if not sha then
+    vim.notify('Not a commit: ' .. rev, vim.log.levels.WARN)
+    return
+  end
+  copy_plus(sha, 'Commit id copied: ' .. sha)
+end
+
 vim.keymap.set('n', 'yc', '0y$', { desc = 'Yank line without newline' })
 
 vim.keymap.set('n', '<leader>yf', function()
@@ -178,3 +219,16 @@ end, { noremap = true, silent = true, desc = '[y]ank [c]opy (snippet)' })
 vim.keymap.set('v', '<leader>yc', function()
   yank_snippet(visual_line_range())
 end, { noremap = true, silent = true, desc = '[y]ank [c]opy (snippet)' })
+
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('yank-commit-id', { clear = true }),
+  pattern = 'git',
+  callback = function(ev)
+    vim.keymap.set('n', '<leader>yi', yank_commit_id, {
+      buffer = ev.buf,
+      noremap = true,
+      silent = true,
+      desc = '[y]ank commit [i]d',
+    })
+  end,
+})
