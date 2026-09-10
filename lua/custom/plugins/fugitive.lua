@@ -40,6 +40,7 @@ return {
         end,
         desc = '[G]it [l]og --oneline',
       },
+      { '<leader>gb', ':Git blame<CR>', desc = '[G]it [b]lame' },
     },
     silent = true,
     config = function()
