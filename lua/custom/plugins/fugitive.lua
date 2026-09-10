@@ -3,13 +3,21 @@
 -- file outside it (oil/:cd must not steal this).
 local launch_cwd = vim.fn.getcwd()
 
-local function git_status(dir)
+local function git_in(dir, arg)
   local git_dir = vim.fn.FugitiveExtractGitDir(dir)
   if git_dir == '' then
     vim.notify('No git repository in ' .. dir, vim.log.levels.WARN)
     return
   end
-  vim.cmd(vim.fn['fugitive#Command'](0, 0, 0, 0, '', '++curwin', git_dir))
+  vim.cmd(vim.fn['fugitive#Command'](0, 0, 0, 0, '', arg, git_dir))
+end
+
+local function git_status(dir)
+  git_in(dir, '++curwin')
+end
+
+local function git_log_oneline(dir)
+  git_in(dir, '++curwin log --oneline')
 end
 
 return {
@@ -25,6 +33,13 @@ return {
         desc = '[G]it [s]tatus',
       },
       { '<leader>gS', ':0Git<CR>', desc = '[G]it [S]tatus (file repo)' },
+      {
+        '<leader>gl',
+        function()
+          git_log_oneline(launch_cwd)
+        end,
+        desc = '[G]it [l]og --oneline',
+      },
     },
     silent = true,
     config = function()
