@@ -24,6 +24,7 @@ vim.keymap.set('n', '<leader>h', '<cmd>LspClangdSwitchSourceHeader<CR>', { norem
 vim.keymap.set('n', '<leader>x', '<cmd>.lua<CR>', { noremap = true, silent = true })
 vim.keymap.set('v', '<leader>x', "<cmd>'<,'>lua<CR>", { noremap = true, silent = true })
 vim.keymap.set('n', '<leader>X', ':%lua<CR>', { noremap = true, silent = true })
+vim.keymap.set('i', '<C-g>', '<C-k>', { desc = 'Insert digraph' })
 
 -- clipboard
 local function git_relpath()
@@ -173,6 +174,40 @@ local function yank_commit_id()
   copy_plus(sha, 'Commit id copied: ' .. sha)
 end
 
+local function yank_diagnostics(start_line, end_line)
+  local diagnostics = vim.diagnostic.get(0)
+  local severity_names = { 'ERROR', 'WARN', 'INFO', 'HINT' }
+  local lines = { 'Diagnostics: ' .. git_relpath(), '' }
+
+  for _, diagnostic in ipairs(diagnostics) do
+    local diagnostic_start = diagnostic.lnum + 1
+    local diagnostic_end = (diagnostic.end_lnum or diagnostic.lnum) + 1
+    if diagnostic_start <= end_line and diagnostic_end >= start_line then
+      local location = string.format('%d:%d', diagnostic.lnum + 1, diagnostic.col + 1)
+      local source = diagnostic.source or 'LSP'
+      local code = diagnostic.code and (' [' .. diagnostic.code .. ']') or ''
+      table.insert(
+        lines,
+        string.format(
+          '- %s [%s] %s%s: %s',
+          location,
+          severity_names[diagnostic.severity] or 'UNKNOWN',
+          source,
+          code,
+          diagnostic.message
+        )
+      )
+    end
+  end
+
+  if #lines == 2 then
+    vim.notify('No diagnostics in current buffer range', vim.log.levels.INFO)
+    return
+  end
+
+  copy_plus(table.concat(lines, '\n'), 'Copied diagnostics')
+end
+
 vim.keymap.set('n', 'yc', '0y$', { desc = 'Yank line without newline' })
 
 vim.keymap.set('n', '<leader>yf', function()
@@ -232,3 +267,16 @@ vim.api.nvim_create_autocmd('FileType', {
     })
   end,
 })
+
+vim.keymap.set('n', '<leader>ye', function()
+  local line = vim.fn.line '.'
+  yank_diagnostics(line, line)
+end, { noremap = true, silent = true, desc = '[y]ank current-line [e]rrors' })
+
+vim.keymap.set('v', '<leader>ye', function()
+  yank_diagnostics(visual_line_range())
+end, { noremap = true, silent = true, desc = '[y]ank selected [e]rrors' })
+
+vim.keymap.set('n', '<leader>yE', function()
+  yank_diagnostics(1, vim.fn.line '$')
+end, { noremap = true, silent = true, desc = '[y]ank all [E]rrors' })
