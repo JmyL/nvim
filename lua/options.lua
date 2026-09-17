@@ -33,6 +33,9 @@ local function wl_paste(reg)
     return { { '' }, 'v' }
   end
   local regtype = (#lines > 0 and lines[#lines] == '') and 'V' or 'v'
+  if regtype == 'V' and #lines > 0 and lines[#lines] == '' then
+    table.remove(lines, #lines)
+  end
   return { lines, regtype }
 end
 
@@ -82,7 +85,14 @@ local function paste_with_tmux_or_herdr(reg)
       vim.fn.system { 'tmux', 'refresh-client', '-l' }
       vim.uv.sleep(100)
     end
-    return osc52.paste(reg)()
+    local pasted = osc52.paste(reg)()
+    local lines, regtype = pasted[1], pasted[2]
+    if type(lines) == 'table' and #lines > 0 and lines[#lines] == '' then
+      table.remove(lines, #lines)
+      regtype = regtype == nil and 'V' or regtype
+      pasted = { lines, regtype }
+    end
+    return pasted
   end
 end
 
