@@ -56,6 +56,24 @@ return {
       local hidden_grep_args = { '--hidden', '--glob', '!.git/' }
       local vimgrep_arguments = vim.deepcopy(require('telescope.config').values.vimgrep_arguments)
       vim.list_extend(vimgrep_arguments, hidden_grep_args)
+
+      local function git_default_branch()
+        local origin_head = vim.trim(vim.fn.system 'git symbolic-ref --short refs/remotes/origin/HEAD')
+        if vim.v.shell_error == 0 and origin_head ~= '' then
+          return origin_head:gsub('^origin/', '')
+        end
+
+        -- Fallback to the common defaults when origin/HEAD is unavailable.
+        for _, candidate in ipairs { 'main', 'master' } do
+          vim.fn.system(('git rev-parse --verify %s'):format(candidate))
+          if vim.v.shell_error == 0 then
+            return candidate
+          end
+        end
+
+        return nil
+      end
+
       require('telescope').setup {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
@@ -133,6 +151,18 @@ return {
         builtin.find_files { hidden = true }
       end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>sf', builtin.git_files, { desc = '[S]earch [G]it index' })
+      vim.keymap.set('n', '<leader>sc', function()
+        local base_branch = git_default_branch()
+        if not base_branch then
+          vim.notify('Could not detect base branch (main/master)', vim.log.levels.WARN)
+          return
+        end
+
+        builtin.find_files {
+          prompt_title = ('Changed files vs %s'):format(base_branch),
+          find_command = { 'git', 'diff', '--name-only', '--diff-filter=ACMRTUXB', base_branch .. '...HEAD' },
+        }
+      end, { desc = '[S]earch [C]hanged files vs base' })
       vim.keymap.set('n', '<leader>so', builtin.builtin, { desc = '[S]earch with another [O]ption' })
       vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[s]earch using [t]reesitter query' })
       vim.keymap.set('n', '<leader>sd', builtin.grep_string, { desc = '[S]earch current wor[d]' })
