@@ -57,21 +57,75 @@ return {
       local vimgrep_arguments = vim.deepcopy(require('telescope.config').values.vimgrep_arguments)
       vim.list_extend(vimgrep_arguments, hidden_grep_args)
 
-      local function git_default_branch()
-        local origin_head = vim.trim(vim.fn.system 'git symbolic-ref --short refs/remotes/origin/HEAD')
-        if vim.v.shell_error == 0 and origin_head ~= '' then
-          return origin_head:gsub('^origin/', '')
+      local function git_output(cmd)
+        local out = vim.fn.system(cmd)
+        if vim.v.shell_error ~= 0 then
+          return nil
+        end
+        return vim.trim(out)
+      end
+
+      local function git_lines(cmd)
+        local out = git_output(cmd)
+        if not out or out == '' then
+          return {}
+        end
+        return vim.split(out, '\n', { trimempty = true })
+      end
+
+      local function detect_base_branch_for_head()
+        local current = git_output 'git branch --show-current'
+        if not current or current == '' then
+          return nil
         end
 
-        -- Fallback to the common defaults when origin/HEAD is unavailable.
-        for _, candidate in ipairs { 'main', 'master' } do
-          vim.fn.system(('git rev-parse --verify %s'):format(candidate))
-          if vim.v.shell_error == 0 then
-            return candidate
+        local candidates = {}
+        local seen = {}
+        local function add_candidate(ref)
+          if ref and ref ~= '' and ref ~= current and ref ~= ('origin/' .. current) and not seen[ref] then
+            seen[ref] = true
+            table.insert(candidates, ref)
           end
         end
 
-        return nil
+        for _, ref in ipairs(git_lines "git for-each-ref --format='%(refname:short)' refs/remotes/origin") do
+          if ref ~= 'origin/HEAD' then
+            add_candidate(ref)
+          end
+        end
+        for _, ref in ipairs(git_lines "git for-each-ref --format='%(refname:short)' refs/heads") do
+          add_candidate(ref)
+        end
+
+        local best_ref = nil
+        local best_distance = math.huge
+        local preferred = { 'origin/main', 'origin/master', 'origin/develop', 'main', 'master', 'develop' }
+        local preference_rank = {}
+        for i, ref in ipairs(preferred) do
+          preference_rank[ref] = i
+        end
+
+        for _, ref in ipairs(candidates) do
+          local merge_base = git_output(('git merge-base HEAD %s'):format(vim.fn.shellescape(ref)))
+          if merge_base and merge_base ~= '' then
+            local distance = git_output(('git rev-list --count %s..HEAD'):format(merge_base))
+            local distance_num = tonumber(distance)
+            if distance_num then
+              local is_better = distance_num < best_distance
+              if distance_num == best_distance and best_ref then
+                local old_rank = preference_rank[best_ref] or math.huge
+                local new_rank = preference_rank[ref] or math.huge
+                is_better = new_rank < old_rank
+              end
+              if is_better then
+                best_ref = ref
+                best_distance = distance_num
+              end
+            end
+          end
+        end
+
+        return best_ref
       end
 
       require('telescope').setup {
@@ -152,9 +206,9 @@ return {
       end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>sf', builtin.git_files, { desc = '[S]earch [G]it index' })
       vim.keymap.set('n', '<leader>sc', function()
-        local base_branch = git_default_branch()
+        local base_branch = detect_base_branch_for_head()
         if not base_branch then
-          vim.notify('Could not detect base branch (main/master)', vim.log.levels.WARN)
+          vim.notify('Could not detect a base branch for current HEAD', vim.log.levels.WARN)
           return
         end
 
