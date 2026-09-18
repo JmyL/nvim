@@ -65,18 +65,20 @@ return {
         return vim.trim(out)
       end
 
-      local function git_lines(cmd)
-        local out = git_output(cmd)
-        if not out or out == '' then
-          return {}
-        end
-        return vim.split(out, '\n', { trimempty = true })
-      end
+      local base_branch_cache = {
+        head = nil,
+        base = nil,
+      }
 
       local function detect_base_branch_for_head()
         local current = git_output 'git branch --show-current'
         if not current or current == '' then
           return nil
+        end
+
+        local head_sha = git_output 'git rev-parse --verify HEAD'
+        if head_sha and base_branch_cache.head == head_sha then
+          return base_branch_cache.base
         end
 
         local candidates = {}
@@ -88,25 +90,27 @@ return {
           end
         end
 
-        for _, ref in ipairs(git_lines "git for-each-ref --format='%(refname:short)' refs/remotes/origin") do
-          if ref ~= 'origin/HEAD' then
-            add_candidate(ref)
-          end
-        end
-        for _, ref in ipairs(git_lines "git for-each-ref --format='%(refname:short)' refs/heads") do
-          add_candidate(ref)
-        end
+        -- Keep candidate set small for responsiveness.
+        add_candidate(git_output 'git rev-parse --abbrev-ref --symbolic-full-name @{upstream}')
+        add_candidate(vim.trim((git_output 'git symbolic-ref --short refs/remotes/origin/HEAD' or ''):gsub('^origin/', '')))
+        add_candidate 'origin/main'
+        add_candidate 'origin/master'
+        add_candidate 'origin/develop'
+        add_candidate 'main'
+        add_candidate 'master'
+        add_candidate 'develop'
 
         local best_ref = nil
         local best_distance = math.huge
-        local preferred = { 'origin/main', 'origin/master', 'origin/develop', 'main', 'master', 'develop' }
+        local preferred = { '@{upstream}', 'origin/main', 'origin/master', 'origin/develop', 'main', 'master', 'develop' }
         local preference_rank = {}
         for i, ref in ipairs(preferred) do
           preference_rank[ref] = i
         end
 
         for _, ref in ipairs(candidates) do
-          local merge_base = git_output(('git merge-base HEAD %s'):format(vim.fn.shellescape(ref)))
+          local merge_base = git_output(('git merge-base --fork-point %s HEAD'):format(vim.fn.shellescape(ref)))
+            or git_output(('git merge-base HEAD %s'):format(vim.fn.shellescape(ref)))
           if merge_base and merge_base ~= '' then
             local distance = git_output(('git rev-list --count %s..HEAD'):format(merge_base))
             local distance_num = tonumber(distance)
@@ -123,6 +127,11 @@ return {
               end
             end
           end
+        end
+
+        if head_sha then
+          base_branch_cache.head = head_sha
+          base_branch_cache.base = best_ref
         end
 
         return best_ref
