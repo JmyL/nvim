@@ -74,6 +74,24 @@ return {
         return git_output(('git rev-parse --verify %s'):format(vim.fn.shellescape(ref))) ~= nil
       end
 
+      local function detect_created_from_branch(current)
+        local reflog = git_output(('git reflog show --pretty=%gs --max-count=200 %s'):format(vim.fn.shellescape(current)))
+        if not reflog or reflog == '' then
+          return nil
+        end
+
+        local lines = vim.split(reflog, '\n', { trimempty = true })
+        -- Reflog is newest-first; scan oldest-first to find the branch origin.
+        for i = #lines, 1, -1 do
+          local source = lines[i]:match '^branch: Created from (.+)$'
+          if source and source ~= '' and source ~= 'HEAD' then
+            return source
+          end
+        end
+
+        return nil
+      end
+
       local function detect_base_branch_for_head()
         local current = git_output 'git branch --show-current'
         if not current or current == '' then
@@ -85,47 +103,76 @@ return {
           return base_branch_cache.base
         end
 
-        -- Pure-git base selection: closest to GitHub compare semantics
-        -- without querying PR metadata.
-        local gh_merge_base = git_output(('git config --get branch.%s.gh-merge-base'):format(vim.fn.shellescape(current)))
-        if gh_merge_base then
-          local origin_ref = 'origin/' .. gh_merge_base
-          if git_ref_exists(origin_ref) then
-            base_branch_cache.head = head_sha
-            base_branch_cache.base = origin_ref
-            return origin_ref
-          end
-          if git_ref_exists(gh_merge_base) then
-            base_branch_cache.head = head_sha
-            base_branch_cache.base = gh_merge_base
-            return gh_merge_base
+        local candidates = {}
+        local seen = {}
+        local function add_candidate(ref)
+          if ref and ref ~= '' and ref ~= current and ref ~= ('origin/' .. current) and not seen[ref] then
+            seen[ref] = true
+            table.insert(candidates, ref)
           end
         end
 
+        -- Explicit per-branch override (same concept as gh's merge-base config).
+        local gh_merge_base = git_output(('git config --get branch.%s.gh-merge-base'):format(vim.fn.shellescape(current)))
+        if gh_merge_base and gh_merge_base ~= '' then
+          add_candidate('origin/' .. gh_merge_base)
+          add_candidate(gh_merge_base)
+        end
+
+        -- Try the branch origin if reflog captured it (e.g. "Created from development").
+        local created_from = detect_created_from_branch(current)
+        if created_from then
+          add_candidate('origin/' .. created_from)
+          add_candidate(created_from)
+        end
+
+        -- Typical integration branches (ree-drive usually targets development).
         local fallback_refs = {
-          git_output 'git rev-parse --abbrev-ref --symbolic-full-name @{upstream}',
+          'origin/development',
+          'development',
           vim.trim(git_output 'git symbolic-ref --short refs/remotes/origin/HEAD' or ''),
           'origin/main',
           'origin/master',
-          'origin/development',
           'origin/develop',
           'main',
           'master',
-          'development',
           'develop',
+          git_output 'git rev-parse --abbrev-ref --symbolic-full-name @{upstream}',
         }
-
         for _, ref in ipairs(fallback_refs) do
-          if ref ~= '' and ref ~= current and git_ref_exists(ref) then
-            base_branch_cache.head = head_sha
-            base_branch_cache.base = ref
-            return ref
+          add_candidate(ref)
+        end
+
+        local best_ref = nil
+        local best_distance = math.huge
+        local preference_rank = {}
+        for i, ref in ipairs(candidates) do
+          preference_rank[ref] = i
+        end
+
+        for _, ref in ipairs(candidates) do
+          if git_ref_exists(ref) then
+            local merge_base = git_output(('git merge-base --fork-point %s HEAD'):format(vim.fn.shellescape(ref)))
+              or git_output(('git merge-base HEAD %s'):format(vim.fn.shellescape(ref)))
+            if merge_base and merge_base ~= '' then
+              local distance = tonumber(git_output(('git rev-list --count %s..HEAD'):format(merge_base)))
+              if distance then
+                local is_better = distance < best_distance
+                if distance == best_distance and best_ref then
+                  is_better = (preference_rank[ref] or math.huge) < (preference_rank[best_ref] or math.huge)
+                end
+                if is_better then
+                  best_ref = ref
+                  best_distance = distance
+                end
+              end
+            end
           end
         end
 
         base_branch_cache.head = head_sha
-        base_branch_cache.base = nil
-        return nil
+        base_branch_cache.base = best_ref
+        return best_ref
       end
 
       require('telescope').setup {
