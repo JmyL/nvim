@@ -245,13 +245,13 @@ return {
       pcall(require('telescope').load_extension, 'live_grep_args')
 
       -- See `:help telescope.builtin`
-      vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp Tag' })
-      vim.keymap.set('n', '<leader>sH', '<cmd>Telescope helpgrep<CR>', { desc = '[S]earch [H]elp' })
-      vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
+      vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[s]earch [h]elp Tag' })
+      vim.keymap.set('n', '<leader>sH', '<cmd>Telescope helpgrep<CR>', { desc = '[s]earch [H]elp' })
+      vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[s]earch [k]eymaps' })
       vim.keymap.set('n', '<leader>sF', function()
         builtin.find_files { hidden = true }
-      end, { desc = '[S]earch [F]iles' })
-      vim.keymap.set('n', '<leader>sf', builtin.git_files, { desc = '[S]earch [G]it index' })
+      end, { desc = '[s]earch [F]iles' })
+      vim.keymap.set('n', '<leader>sf', builtin.git_files, { desc = '[s]earch [f]iles from git index' })
       vim.keymap.set('n', '<leader>sc', function()
         local base_branch = detect_base_branch_for_head()
         if not base_branch then
@@ -263,22 +263,22 @@ return {
           prompt_title = ('Changed files vs %s'):format(base_branch),
           find_command = { 'git', 'diff', '--name-only', '--diff-filter=ACMRTUXB', base_branch .. '...HEAD' },
         }
-      end, { desc = '[S]earch [C]hanged files vs base' })
-      vim.keymap.set('n', '<leader>so', builtin.builtin, { desc = '[S]earch with another [O]ption' })
+      end, { desc = '[s]earch changed files vs [g]it base' })
+      vim.keymap.set('n', '<leader>so', builtin.builtin, { desc = '[s]earch with another [o]ption' })
       vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[s]earch using [t]reesitter query' })
-      vim.keymap.set('n', '<leader>sd', builtin.grep_string, { desc = '[S]earch current wor[d]' })
+      vim.keymap.set('n', '<leader>sd', builtin.grep_string, { desc = '[s]earch current wor[d]' })
       vim.keymap.set('n', '<leader>s/', function()
         require('telescope').extensions.live_grep_args.live_grep_args()
       end, { desc = '[s]earch [/] in all files' })
-      vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
-      vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
+      vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[s]earch [r]esume' })
+      vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[s]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
         -- You can pass additional configuration to Telescope to change the theme, layout, etc.
         builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-          winblend = 10,
+          winblend = 0,
           previewer = false,
         })
       end, { desc = '[/] Fuzzily search in current buffer' })
