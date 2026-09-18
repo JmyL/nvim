@@ -75,7 +75,7 @@ return {
       end
 
       local function detect_created_from_branch(current)
-        local reflog = git_output(('git reflog show --pretty=%gs --max-count=200 %s'):format(vim.fn.shellescape(current)))
+        local reflog = git_output(('git reflog show --pretty=%%gs --max-count=200 %s'):format(vim.fn.shellescape(current)))
         if not reflog or reflog == '' then
           return nil
         end
