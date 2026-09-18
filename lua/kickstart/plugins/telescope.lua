@@ -70,6 +70,10 @@ return {
         base = nil,
       }
 
+      local function git_ref_exists(ref)
+        return git_output(('git rev-parse --verify %s'):format(vim.fn.shellescape(ref))) ~= nil
+      end
+
       local function detect_base_branch_for_head()
         local current = git_output 'git branch --show-current'
         if not current or current == '' then
@@ -81,60 +85,47 @@ return {
           return base_branch_cache.base
         end
 
-        local candidates = {}
-        local seen = {}
-        local function add_candidate(ref)
-          if ref and ref ~= '' and ref ~= current and ref ~= ('origin/' .. current) and not seen[ref] then
-            seen[ref] = true
-            table.insert(candidates, ref)
+        -- Pure-git base selection: closest to GitHub compare semantics
+        -- without querying PR metadata.
+        local gh_merge_base = git_output(('git config --get branch.%s.gh-merge-base'):format(vim.fn.shellescape(current)))
+        if gh_merge_base then
+          local origin_ref = 'origin/' .. gh_merge_base
+          if git_ref_exists(origin_ref) then
+            base_branch_cache.head = head_sha
+            base_branch_cache.base = origin_ref
+            return origin_ref
+          end
+          if git_ref_exists(gh_merge_base) then
+            base_branch_cache.head = head_sha
+            base_branch_cache.base = gh_merge_base
+            return gh_merge_base
           end
         end
 
-        -- Keep candidate set small for responsiveness.
-        add_candidate(git_output 'git rev-parse --abbrev-ref --symbolic-full-name @{upstream}')
-        add_candidate(vim.trim((git_output 'git symbolic-ref --short refs/remotes/origin/HEAD' or ''):gsub('^origin/', '')))
-        add_candidate 'origin/main'
-        add_candidate 'origin/master'
-        add_candidate 'origin/develop'
-        add_candidate 'main'
-        add_candidate 'master'
-        add_candidate 'develop'
+        local fallback_refs = {
+          git_output 'git rev-parse --abbrev-ref --symbolic-full-name @{upstream}',
+          vim.trim(git_output 'git symbolic-ref --short refs/remotes/origin/HEAD' or ''),
+          'origin/main',
+          'origin/master',
+          'origin/development',
+          'origin/develop',
+          'main',
+          'master',
+          'development',
+          'develop',
+        }
 
-        local best_ref = nil
-        local best_distance = math.huge
-        local preferred = { '@{upstream}', 'origin/main', 'origin/master', 'origin/develop', 'main', 'master', 'develop' }
-        local preference_rank = {}
-        for i, ref in ipairs(preferred) do
-          preference_rank[ref] = i
-        end
-
-        for _, ref in ipairs(candidates) do
-          local merge_base = git_output(('git merge-base --fork-point %s HEAD'):format(vim.fn.shellescape(ref)))
-            or git_output(('git merge-base HEAD %s'):format(vim.fn.shellescape(ref)))
-          if merge_base and merge_base ~= '' then
-            local distance = git_output(('git rev-list --count %s..HEAD'):format(merge_base))
-            local distance_num = tonumber(distance)
-            if distance_num then
-              local is_better = distance_num < best_distance
-              if distance_num == best_distance and best_ref then
-                local old_rank = preference_rank[best_ref] or math.huge
-                local new_rank = preference_rank[ref] or math.huge
-                is_better = new_rank < old_rank
-              end
-              if is_better then
-                best_ref = ref
-                best_distance = distance_num
-              end
-            end
+        for _, ref in ipairs(fallback_refs) do
+          if ref ~= '' and ref ~= current and git_ref_exists(ref) then
+            base_branch_cache.head = head_sha
+            base_branch_cache.base = ref
+            return ref
           end
         end
 
-        if head_sha then
-          base_branch_cache.head = head_sha
-          base_branch_cache.base = best_ref
-        end
-
-        return best_ref
+        base_branch_cache.head = head_sha
+        base_branch_cache.base = nil
+        return nil
       end
 
       require('telescope').setup {
