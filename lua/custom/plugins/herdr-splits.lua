@@ -1,7 +1,7 @@
 return {
   {
     'JmyL/herdr-splits.nvim',
-    branch = 'no-pane-nav-when-zoomed',
+    branch = 'main',
     -- or local path during development:
     -- dir = '~/Projects/herdr-splits',
     cond = vim.env.HERDR_ENV == '1',
