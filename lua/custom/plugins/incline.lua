@@ -10,7 +10,7 @@ return {
         highlight = {
           groups = {
             InclineNormal = 'PmenuSel',
-            InclineNormalNC = 'NormalFloat',
+            InclineNormalNC = 'StatusLineNC',
           },
         },
         window = {
