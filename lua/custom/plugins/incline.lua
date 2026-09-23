@@ -7,24 +7,31 @@ return {
       local incline = require 'incline'
 
       -- 하이라이트 그룹 정의 및 테마 변경 시 자동 재적용 설정
-      local function set_incline_highlights()
-        -- MiniStatuslineModeNormal의 배경색을 가져와서 활성 창의 배경색으로 사용하고, 글씨는 흰색(#ffffff)으로 고정
-        local normal_status = vim.api.nvim_get_hl(0, { name = 'MiniStatuslineModeNormal' })
-        local bg_color = normal_status.bg or normal_status.background or '#89b4fa' -- fallback to catppuccin blue
-        
-        -- MiniStatuslineDevinfo의 배경색과 글씨색을 가져와서 비활성 창에 적용
-        local devinfo_status = vim.api.nvim_get_hl(0, { name = 'MiniStatuslineDevinfo' })
-        local inactive_bg = devinfo_status.bg or devinfo_status.background or '#363a4f'
-        local inactive_fg = devinfo_status.fg or devinfo_status.foreground or '#cad3f5'
+      local function get_hl_colors(name)
+        local hl = vim.api.nvim_get_hl(0, { name = name, link = false })
+        local fg = hl.fg or hl.foreground
+        local bg = hl.bg or hl.background
+        if hl.reverse then
+          return bg, fg
+        end
+        return fg, bg
+      end
 
+      local function set_incline_highlights()
+        local _, normal_bg = get_hl_colors('MiniStatuslineModeNormal')
+        local devinfo_fg, devinfo_bg = get_hl_colors('MiniStatuslineDevinfo')
+
+        -- 활성 창: 배경은 statusline NORMAL 배경(파랑), 글씨는 무조건 흰색(#ffffff)
         vim.api.nvim_set_hl(0, 'InclineNormalActive', {
-          bg = bg_color,
-          fg = '#ffffff', -- 흰색 글씨 고정
+          bg = normal_bg or '#89b4fa',
+          fg = '#ffffff',
+          bold = true,
         })
 
+        -- 비활성 창: statusline Git 영역과 동일한 연회색 배경 + 진회색 글씨
         vim.api.nvim_set_hl(0, 'InclineNormalInactive', {
-          bg = inactive_bg,
-          fg = inactive_fg,
+          bg = devinfo_bg or '#363a4f',
+          fg = devinfo_fg or '#cad3f5',
         })
       end
 
