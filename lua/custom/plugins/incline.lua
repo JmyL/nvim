@@ -7,6 +7,12 @@ return {
       local incline = require 'incline'
 
       incline.setup {
+        highlight = {
+          groups = {
+            InclineNormal = 'PmenuSel',
+            InclineNormalNC = 'NormalFloat',
+          },
+        },
         window = {
           padding = 1,
           placement = { horizontal = 'right', vertical = 'bottom' }, -- 창의 우측 하단에 배치
