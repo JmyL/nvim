@@ -52,14 +52,12 @@ return {
           -- 파일 아이콘 가져오기
           local icon = ''
           local has_devicons, devicons = pcall(require, 'nvim-web-devicons')
-          local icon_color = nil
           if has_devicons then
             local filename = vim.fn.fnamemodify(bufname, ':t')
             local ext = vim.fn.fnamemodify(filename, ':e')
-            local icon_str, color = devicons.get_icon_color(filename, ext, { default = true })
+            local icon_str = devicons.get_icon(filename, ext, { default = true })
             if icon_str then
               icon = icon_str .. ' '
-              icon_color = color
             end
           end
 
@@ -67,9 +65,9 @@ return {
           local is_focused = props.focused
           local text_style = is_focused and { gui = 'bold' } or { gui = 'none' }
 
+          -- 좌우 여백을 명확히 주기 위해 앞뒤에 공백 추가
           return {
-            { icon, guifg = icon_color },
-            { rel_path .. flags, text_style },
+            { ' ' .. icon .. rel_path .. flags .. ' ', text_style },
           }
         end,
       }
