@@ -148,3 +148,4 @@ vim.o.scrolloff = 10
 vim.o.confirm = true
 vim.o.wrapscan = false
 vim.o.linebreak = true
+vim.o.laststatus = 3
