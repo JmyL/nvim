@@ -8,8 +8,24 @@ return {
 
       -- 하이라이트 그룹 정의 및 테마 변경 시 자동 재적용 설정
       local function set_incline_highlights()
-        vim.api.nvim_set_hl(0, 'InclineNormalActive', { link = 'MiniStatuslineModeNormal' })
-        vim.api.nvim_set_hl(0, 'InclineNormalInactive', { link = 'MiniStatuslineDevinfo' })
+        -- MiniStatuslineModeNormal의 배경색을 가져와서 활성 창의 배경색으로 사용하고, 글씨는 흰색(#ffffff)으로 고정
+        local normal_status = vim.api.nvim_get_hl(0, { name = 'MiniStatuslineModeNormal' })
+        local bg_color = normal_status.bg or normal_status.background or '#89b4fa' -- fallback to catppuccin blue
+        
+        -- MiniStatuslineDevinfo의 배경색과 글씨색을 가져와서 비활성 창에 적용
+        local devinfo_status = vim.api.nvim_get_hl(0, { name = 'MiniStatuslineDevinfo' })
+        local inactive_bg = devinfo_status.bg or devinfo_status.background or '#363a4f'
+        local inactive_fg = devinfo_status.fg or devinfo_status.foreground or '#cad3f5'
+
+        vim.api.nvim_set_hl(0, 'InclineNormalActive', {
+          bg = bg_color,
+          fg = '#ffffff', -- 흰색 글씨 고정
+        })
+
+        vim.api.nvim_set_hl(0, 'InclineNormalInactive', {
+          bg = inactive_bg,
+          fg = inactive_fg,
+        })
       end
 
       set_incline_highlights()
@@ -23,7 +39,7 @@ return {
         window = {
           padding = 1,
           placement = { horizontal = 'right', vertical = 'bottom' }, -- 창의 우측 하단에 배치
-          margin = { horizontal = 1, vertical = 1 },
+          margin = { horizontal = 0, vertical = 1 }, -- horizontal을 0으로 변경하여 우측 끝에 딱 붙임
           winhighlight = {
             active = { Normal = 'InclineNormalActive' },
             inactive = { Normal = 'InclineNormalInactive' },
@@ -65,9 +81,9 @@ return {
           local is_focused = props.focused
           local text_style = is_focused and { gui = 'bold' } or { gui = 'none' }
 
-          -- 좌우 여백을 명확히 주기 위해 앞뒤에 공백 추가
+          -- padding = 1이 자동으로 좌우 여백을 주므로, 문자열 앞뒤의 수동 공백을 제거하여 정렬 불균형 및 @ 표시 방지
           return {
-            { ' ' .. icon .. rel_path .. flags .. ' ', text_style },
+            { icon .. rel_path .. flags, text_style },
           }
         end,
       }
