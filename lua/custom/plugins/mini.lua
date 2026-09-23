@@ -70,6 +70,56 @@ return {
         -- 원래 mini.statusline의 파일명 표시 로직을 호출하여 전체 상대 경로가 나오도록 함
         return orig_section_filename(args)
       end
+
+      -- 각 창(window)의 상단에 파일 이름과 아이콘을 표시하는 custom winbar 설정
+      _G.custom_winbar = function()
+        local exclude_ft = {
+          'neo-tree',
+          'toggleterm',
+          'help',
+          'qf',
+          'lazy',
+          'mason',
+          'aerial',
+          'codecompanion',
+        }
+
+        if vim.tbl_contains(exclude_ft, vim.bo.filetype) or vim.bo.buftype ~= '' then
+          return ''
+        end
+
+        local bufname = vim.api.nvim_buf_get_name(0)
+        if bufname == '' then
+          return ' [No Name]'
+        end
+
+        local filename = vim.fn.fnamemodify(bufname, ':t')
+
+        -- 파일 아이콘 가져오기
+        local icon = ''
+        local has_devicons, devicons = pcall(require, 'nvim-web-devicons')
+        if has_devicons then
+          local ext = vim.fn.fnamemodify(filename, ':e')
+          local icon_str, _ = devicons.get_icon(filename, ext, { default = true })
+          if icon_str then
+            icon = icon_str .. ' '
+          end
+        end
+
+        -- %m은 수정됨[+], %r은 읽기 전용[RO] 표시
+        return ' ' .. icon .. filename .. ' %m%r'
+      end
+
+      vim.opt.winbar = '%{%v:lua.custom_winbar()%}'
+
+      -- 비활성 창 winbar 글자를 더 흐리게 표시
+      vim.api.nvim_set_hl(0, 'WinBarNC', { link = 'StatusLineNC' })
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        callback = function()
+          vim.api.nvim_set_hl(0, 'WinBarNC', { link = 'StatusLineNC' })
+        end,
+      })
+
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
       require('mini.operators').setup { replace = { prefix = '<leader>r' } }
