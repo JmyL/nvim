@@ -29,9 +29,10 @@ return {
         return ''
       end
 
-      -- 글로벌 statusline에서 파일명 제거 (incline.nvim이 각 창의 하단에 표시하므로). 단, 터미널(toggleterm)일 때는 표시.
+      -- 글로벌 statusline에서 파일명 표시 (현재 작업 디렉토리 기준 상대 경로 전체 표시)
+      local orig_section_filename = MiniStatusline.section_filename
       ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_filename = function()
+      statusline.section_filename = function(args)
         if vim.bo.filetype == 'toggleterm' then
           local base = 'terminal ' .. tostring(vim.b.toggle_number)
           local display_name = select(2, require('toggleterm.terminal').identify()).display_name
@@ -41,7 +42,8 @@ return {
             return base
           end
         end
-        return ''
+        -- 원래 mini.statusline의 파일명 표시 로직을 호출하여 전체 상대 경로가 나오도록 함
+        return orig_section_filename(args)
       end
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
