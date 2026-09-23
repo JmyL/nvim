@@ -29,7 +29,7 @@ return {
         return ''
       end
 
-      -- 글로벌 statusline에서 파일명 제거 (winbar가 상단에 표시하므로). 단, 터미널(toggleterm)일 때는 표시.
+      -- 글로벌 statusline에서 파일명 제거 (incline.nvim이 각 창의 하단에 표시하므로). 단, 터미널(toggleterm)일 때는 표시.
       ---@diagnostic disable-next-line: duplicate-set-field
       statusline.section_filename = function()
         if vim.bo.filetype == 'toggleterm' then
@@ -43,49 +43,6 @@ return {
         end
         return ''
       end
-
-      -- 각 창(window)의 상단에 파일 경로와 아이콘을 표시하는 custom winbar 설정
-      _G.custom_winbar = function()
-        local exclude_ft = {
-          'neo-tree',
-          'toggleterm',
-          'help',
-          'qf',
-          'lazy',
-          'mason',
-          'aerial',
-          'codecompanion',
-        }
-
-        if vim.tbl_contains(exclude_ft, vim.bo.filetype) then
-          return ''
-        end
-
-        local bufname = vim.api.nvim_buf_get_name(0)
-        if bufname == '' then
-          return ' [No Name]'
-        end
-
-        -- 현재 작업 디렉토리 기준 상대 경로 가져오기
-        local rel_path = vim.fn.fnamemodify(bufname, ':.')
-
-        -- 파일 아이콘 가져오기
-        local icon = ''
-        local has_devicons, devicons = pcall(require, 'nvim-web-devicons')
-        if has_devicons then
-          local filename = vim.fn.fnamemodify(bufname, ':t')
-          local ext = vim.fn.fnamemodify(filename, ':e')
-          local icon_str, _ = devicons.get_icon(filename, ext, { default = true })
-          if icon_str then
-            icon = icon_str .. ' '
-          end
-        end
-
-        -- %m은 수정됨[+], %r은 읽기 전용[RO] 표시
-        return ' ' .. icon .. rel_path .. ' %m%r'
-      end
-
-      vim.opt.winbar = '%{%v:lua.custom_winbar()%}'
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
       require('mini.operators').setup { replace = { prefix = '<leader>r' } }
