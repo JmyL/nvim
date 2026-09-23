@@ -24,8 +24,7 @@ return {
             return ' [No Name] '
           end
 
-          -- 상대 경로 가져오기
-          local rel_path = vim.fn.fnamemodify(bufname, ':.')
+          local filename = vim.fn.fnamemodify(bufname, ':t')
 
           -- 수정 여부 및 읽기 전용 표시
           local modified = vim.api.nvim_get_option_value('modified', { buf = props.buf })
@@ -42,7 +41,6 @@ return {
           local icon = ''
           local has_devicons, devicons = pcall(require, 'nvim-web-devicons')
           if has_devicons then
-            local filename = vim.fn.fnamemodify(bufname, ':t')
             local ext = vim.fn.fnamemodify(filename, ':e')
             local icon_str = devicons.get_icon(filename, ext, { default = true })
             if icon_str then
@@ -50,7 +48,7 @@ return {
             end
           end
 
-          return icon .. rel_path .. flags
+          return icon .. filename .. flags
         end,
       }
     end,
