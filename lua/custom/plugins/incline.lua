@@ -5,6 +5,20 @@ return {
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
       local incline = require 'incline'
+
+      -- 하이라이트 그룹 정의 및 테마 변경 시 자동 재적용 설정
+      local function set_incline_highlights()
+        vim.api.nvim_set_hl(0, 'InclineNormalActive', { link = 'MiniStatuslineModeNormal' })
+        vim.api.nvim_set_hl(0, 'InclineNormalInactive', { link = 'MiniStatuslineDevinfo' })
+      end
+
+      set_incline_highlights()
+
+      vim.api.nvim_create_autocmd('ColorScheme', {
+        pattern = '*',
+        callback = set_incline_highlights,
+      })
+
       incline.setup {
         window = {
           padding = 1,
