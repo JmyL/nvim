@@ -9,7 +9,7 @@ return {
         window = {
           padding = 1,
           placement = { horizontal = 'right', vertical = 'bottom' }, -- 창의 우측 하단에 배치
-          margin = { horizontal = 1, vertical = 0 },
+          margin = { horizontal = 1, vertical = 1 },
           winhighlight = {
             active = { Normal = 'InclineNormalActive' },
             inactive = { Normal = 'InclineNormalInactive' },
