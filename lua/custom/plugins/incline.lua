@@ -17,21 +17,28 @@ return {
         return fg, bg
       end
 
+      local function hex_color(color, fallback)
+        if type(color) == 'number' then
+          return string.format('#%06x', color)
+        end
+        return color or fallback
+      end
+
       local function set_incline_highlights()
         local _, normal_bg = get_hl_colors('MiniStatuslineModeNormal')
         local devinfo_fg, devinfo_bg = get_hl_colors('MiniStatuslineDevinfo')
 
         -- 활성 창: 배경은 statusline NORMAL 배경(파랑), 글씨는 무조건 흰색(#ffffff)
         vim.api.nvim_set_hl(0, 'InclineNormalActive', {
-          bg = normal_bg or '#89b4fa',
+          bg = hex_color(normal_bg, '#89b4fa'),
           fg = '#ffffff',
           bold = true,
         })
 
         -- 비활성 창: statusline Git 영역과 동일한 연회색 배경 + 진회색 글씨
         vim.api.nvim_set_hl(0, 'InclineNormalInactive', {
-          bg = devinfo_bg or '#363a4f',
-          fg = devinfo_fg or '#cad3f5',
+          bg = hex_color(devinfo_bg, '#363a4f'),
+          fg = hex_color(devinfo_fg, '#cad3f5'),
         })
       end
 
@@ -86,11 +93,18 @@ return {
 
           -- 활성화된 창과 비활성화된 창의 텍스트 스타일 조정
           local is_focused = props.focused
-          local text_style = is_focused and { gui = 'bold' } or { gui = 'none' }
+          local text_style = {
+            gui = is_focused and 'bold' or 'none',
+            guifg = is_focused and '#ffffff' or '#363a4f',
+          }
 
-          -- padding = 1이 자동으로 좌우 여백을 주므로, 문자열 앞뒤의 수동 공백을 제거하여 정렬 불균형 및 @ 표시 방지
+          -- highlight 속성은 텍스트 조각 자체에 지정해야 파일명과 아이콘 모두에 적용된다.
           return {
-            { icon .. rel_path .. flags, text_style },
+            {
+              icon .. rel_path .. flags,
+              gui = text_style.gui,
+              guifg = text_style.guifg,
+            },
           }
         end,
       }
