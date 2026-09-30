@@ -97,7 +97,7 @@ return {
         end,
         desc = '[G]it [l]og --oneline',
       },
-      { '<leader>gb', ':Git blame --date=short<CR>', desc = '[G]it [b]lame' },
+      { '<leader>gb', ':Git blame --date=short --abbrev=6<CR>', desc = '[G]it [b]lame' },
     },
     silent = true,
     config = function()
@@ -204,7 +204,7 @@ return {
                 -- every blame window before splitting a fresh one.
                 pcall(vim.api.nvim_win_set_option, state.origin_winid, 'scrollbind', false)
                 local updated = pcall(vim.api.nvim_win_call, state.origin_winid, function()
-                  vim.cmd 'Git blame --date=short'
+                  vim.cmd 'Git blame --date=short --abbrev=6'
                 end)
                 if not updated then
                   pcall(vim.api.nvim_win_close, item.win, false)
