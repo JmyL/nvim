@@ -84,6 +84,84 @@ return {
           end
         end,
       })
+
+      -- :Git blame scrollbinds to one origin window, but never refreshes
+      -- when that window opens a different buffer. Re-blame the new buffer;
+      -- if it cannot be blamed (help, status, non-git, ...), close the
+      -- blame window instead of leaving stale output behind. The re-blame
+      -- runs on the next loop tick: from inside BufEnter, fugitive's
+      -- filetype detection is suppressed by autocmd nesting rules and the
+      -- new blame buffer would be left unhighlighted.
+      --
+      -- The state is swept per loop tick instead of tracked per window:
+      -- each :Git blame creates a fresh temp buffer whose origin_winid
+      -- points at the same origin window, so stale splits would
+      -- accumulate if they were not collected together.
+      local blame_busy = false
+
+      vim.api.nvim_create_autocmd('BufEnter', {
+        group = vim.api.nvim_create_augroup('fugitive_blame_follow', { clear = true }),
+        callback = function()
+          if blame_busy then
+            return
+          end
+          -- Collect stale blame windows first so all of them get cleaned
+          -- up in one pass, whatever their individual origins.
+          local stale = {}
+          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            local buf = vim.api.nvim_win_get_buf(win)
+            if vim.bo[buf].filetype == 'fugitiveblame' then
+              local ok, state = pcall(vim.fn['fugitive#Result'], buf)
+              if
+                ok
+                and state.filetype == 'fugitiveblame'
+                and state.origin_winid
+                and state.origin_bufnr
+                and state.origin_bufnr > 0
+                and vim.api.nvim_win_is_valid(state.origin_winid)
+                and vim.api.nvim_win_get_buf(state.origin_winid) ~= state.origin_bufnr
+              then
+                stale[#stale + 1] = { win = win, state = state }
+              end
+            end
+          end
+          if #stale == 0 then
+            return
+          end
+
+          blame_busy = true
+          vim.schedule(function()
+            for _, item in ipairs(stale) do
+              local state = item.state
+              if not vim.api.nvim_win_is_valid(state.origin_winid) or vim.api.nvim_win_get_buf(state.origin_winid) == state.origin_bufnr then
+                goto continue
+              end
+              local origin_buf = vim.api.nvim_win_get_buf(state.origin_winid)
+              local blamable = vim.bo[origin_buf].buftype == ''
+                and vim.bo[origin_buf].buflisted
+                and vim.fn.FugitiveExtractGitDir(vim.api.nvim_buf_get_name(origin_buf)) ~= ''
+              if blamable then
+                -- Unbind the origin window first: fugitive's own
+                -- re-blame sweep only deletes the scrollbound blame
+                -- matching the new origin, leaving older blame
+                -- windows to pile up. Without scrollbind it deletes
+                -- every blame window before splitting a fresh one.
+                pcall(vim.api.nvim_win_set_option, state.origin_winid, 'scrollbind', false)
+                local updated = pcall(vim.api.nvim_win_call, state.origin_winid, function()
+                  vim.cmd 'Git blame'
+                end)
+                if not updated then
+                  pcall(vim.api.nvim_win_close, item.win, false)
+                end
+              else
+                pcall(vim.api.nvim_win_close, item.win, false)
+              end
+              ::continue::
+            end
+            blame_busy = false
+          end)
+        end,
+      })
     end,
   },
 }
