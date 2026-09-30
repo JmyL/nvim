@@ -105,10 +105,19 @@ return {
 
         local candidates = {}
         local seen = {}
+        local function normalize_ref(ref)
+          if not ref or ref == '' then
+            return nil
+          end
+          local short = ref:match '^refs/remotes/(.+)$' or ref:match '^refs/heads/(.+)$'
+          return short or ref
+        end
+
         local function add_candidate(ref)
-          if ref and ref ~= '' and ref ~= current and ref ~= ('origin/' .. current) and not seen[ref] then
-            seen[ref] = true
-            table.insert(candidates, ref)
+          local norm = normalize_ref(ref)
+          if norm and norm ~= '' and norm ~= current and norm ~= ('origin/' .. current) and not seen[norm] then
+            seen[norm] = true
+            table.insert(candidates, norm)
           end
         end
 
