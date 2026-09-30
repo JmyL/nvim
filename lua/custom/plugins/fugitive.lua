@@ -3,6 +3,43 @@
 -- file outside it (oil/:cd must not steal this).
 local launch_cwd = vim.fn.getcwd()
 
+-- Last cursor line per status buffer, keyed by bufname. Fugitive forces the
+-- cursor to line 1 when revisiting a status buffer that is already displayed
+-- (s:StatusCommand runs a bare `1`) and a re-created one starts at line 1
+-- after bufhidden=delete wiped it, so remember where we left off and put the
+-- cursor back once fugitive is done moving it around.
+local git_status_cursors = {}
+
+local function is_status_buffer(buf)
+  return vim.bo[buf].filetype == 'fugitive' and vim.api.nvim_buf_get_name(buf):match '^fugitive://.*//$' ~= nil
+end
+
+local function save_status_cursor()
+  local buf = vim.api.nvim_get_current_buf()
+  if is_status_buffer(buf) then
+    git_status_cursors[vim.api.nvim_buf_get_name(buf)] = vim.fn.line '.'
+  end
+end
+
+local function restore_status_cursor()
+  -- Everything fugitive does to the cursor happens synchronously inside the
+  -- :Git command below; scheduling lands the restore after all of it.
+  vim.schedule(function()
+    local buf = vim.api.nvim_get_current_buf()
+    local line = git_status_cursors[vim.api.nvim_buf_get_name(buf)]
+    if not is_status_buffer(buf) or not line or line > vim.api.nvim_buf_line_count(buf) then
+      return
+    end
+    vim.cmd('normal! ' .. line .. 'G')
+  end)
+end
+
+local function git_status_open(git_dir)
+  save_status_cursor()
+  vim.cmd(vim.fn['fugitive#Command'](0, 0, 0, 0, '', '++curwin', git_dir))
+  restore_status_cursor()
+end
+
 local function git_in(dir, arg)
   local git_dir = vim.fn.FugitiveExtractGitDir(dir)
   if git_dir == '' then
@@ -13,7 +50,12 @@ local function git_in(dir, arg)
 end
 
 local function git_status(dir)
-  git_in(dir, '++curwin')
+  local git_dir = vim.fn.FugitiveExtractGitDir(dir)
+  if git_dir == '' then
+    vim.notify('No git repository in ' .. dir, vim.log.levels.WARN)
+    return
+  end
+  git_status_open(git_dir)
 end
 
 local function git_log_oneline(dir)
@@ -32,7 +74,22 @@ return {
         end,
         desc = '[G]it [s]tatus',
       },
-      { '<leader>gS', ':0Git<CR>', desc = '[G]it [S]tatus (file repo)' },
+      {
+        '<leader>gS',
+        function()
+          -- :0Git semantics: the repo of the current buffer's file.
+          local git_dir = vim.fn.exists '*FugitiveGitDir' == 1 and vim.fn.FugitiveGitDir() or ''
+          if git_dir == '' then
+            git_dir = vim.fn.FugitiveExtractGitDir(vim.api.nvim_buf_get_name(0))
+          end
+          if git_dir == '' then
+            vim.notify('No git repository for the current buffer', vim.log.levels.WARN)
+            return
+          end
+          git_status_open(git_dir)
+        end,
+        desc = '[G]it [S]tatus (file repo)',
+      },
       {
         '<leader>gl',
         function()
@@ -47,13 +104,12 @@ return {
       -- Fixed-width author so :Gclog subjects stay aligned.
       vim.g.fugitive_summary_format = '%<(20,trunc)%an %s'
 
-      local git_status_cursors = {}
-
       local group = vim.api.nvim_create_augroup('fugitive_cursor_restore', { clear = true })
 
       -- Fugitive's <CR> is Gedit, which calls BlurStatus: leave the status
-      -- window, or :new a split if there is no other usable window. :0Git
-      -- already occupies the current window; open the file there instead.
+      -- window, or :new a split if there is no other usable window. The
+      -- ++curwin status already occupies the current window; open the file
+      -- there instead.
       vim.api.nvim_create_autocmd('FileType', {
         group = group,
         pattern = 'fugitive',
