@@ -121,9 +121,13 @@ return {
         end,
       })
 
+      -- `fugitive://*//` is fugitive's own status-buffer pattern: a bufname
+      -- ending in `//` is a status buffer (blobs/stages carry more after
+      -- the `//`), and it also matches worktrees whose git dir ends in
+      -- .git/worktrees/<name> instead of .git.
       vim.api.nvim_create_autocmd('BufLeave', {
         group = group,
-        pattern = 'fugitive://*.git//',
+        pattern = 'fugitive://*//',
         callback = function()
           local bufname = vim.fn.bufname()
           git_status_cursors[bufname] = vim.fn.line '.'
@@ -132,7 +136,7 @@ return {
 
       vim.api.nvim_create_autocmd('BufEnter', {
         group = group,
-        pattern = 'fugitive://*.git//',
+        pattern = 'fugitive://*//',
         callback = function()
           local bufname = vim.fn.bufname()
           if git_status_cursors[bufname] then
