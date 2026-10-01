@@ -67,6 +67,15 @@ local function yank_cite(start_line, end_line)
   copy_plus(text, 'Copied ' .. text)
 end
 
+local function yank_cite_absolute(start_line, end_line)
+  local abs = vim.fn.expand '%:p'
+  if abs == '' then
+    abs = git_relpath()
+  end
+  local text = cite(abs, start_line, end_line)
+  copy_plus(text, 'Copied ' .. text)
+end
+
 local function yank_snippet(start_line, end_line)
   local header = cite(git_relpath(), start_line, end_line)
   local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
@@ -245,6 +254,15 @@ end, { noremap = true, silent = true, desc = '[y]ank [a]rea (path:line)' })
 vim.keymap.set('v', '<leader>ya', function()
   yank_cite(visual_line_range())
 end, { noremap = true, silent = true, desc = '[y]ank [a]rea (path:line)' })
+
+vim.keymap.set('n', '<leader>yA', function()
+  local line = vim.fn.line '.'
+  yank_cite_absolute(line, line)
+end, { noremap = true, silent = true, desc = '[y]ank [A]bsolute area (abs path:line)' })
+
+vim.keymap.set('v', '<leader>yA', function()
+  yank_cite_absolute(visual_line_range())
+end, { noremap = true, silent = true, desc = '[y]ank [A]bsolute area (abs path:line)' })
 
 vim.keymap.set('n', '<leader>yc', function()
   local line = vim.fn.line '.'
