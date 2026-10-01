@@ -195,17 +195,7 @@ local function yank_diagnostics(start_line, end_line)
       local location = string.format('%d:%d', diagnostic.lnum + 1, diagnostic.col + 1)
       local source = diagnostic.source or 'LSP'
       local code = diagnostic.code and (' [' .. diagnostic.code .. ']') or ''
-      table.insert(
-        lines,
-        string.format(
-          '- %s [%s] %s%s: %s',
-          location,
-          severity_names[diagnostic.severity] or 'UNKNOWN',
-          source,
-          code,
-          diagnostic.message
-        )
-      )
+      table.insert(lines, string.format('- %s [%s] %s%s: %s', location, severity_names[diagnostic.severity] or 'UNKNOWN', source, code, diagnostic.message))
     end
   end
 
@@ -298,3 +288,27 @@ end, { noremap = true, silent = true, desc = '[y]ank selected [e]rrors' })
 vim.keymap.set('n', '<leader>yE', function()
   yank_diagnostics(1, vim.fn.line '$')
 end, { noremap = true, silent = true, desc = '[y]ank all [E]rrors' })
+
+local function is_fence_line(line)
+  return line:match '^%s*```%s*$' ~= nil
+end
+
+local function toggle_code_fence()
+  local first, last = visual_line_range()
+  local last_buffer_line = vim.fn.line '$'
+
+  local above = first > 1 and vim.fn.getline(first - 1) or ''
+  local below = last < last_buffer_line and vim.fn.getline(last + 1) or ''
+
+  if is_fence_line(above) and is_fence_line(below) then
+    vim.api.nvim_buf_set_lines(0, last, last + 1, false, {})
+    vim.api.nvim_buf_set_lines(0, first - 2, first - 1, false, {})
+    return
+  end
+
+  local indent = vim.fn.getline(first):match '^(%s*)' or ''
+  vim.api.nvim_buf_set_lines(0, last, last, false, { indent .. '```' })
+  vim.api.nvim_buf_set_lines(0, first - 1, first - 1, false, { indent .. '```' })
+end
+
+vim.keymap.set('x', 'sac', toggle_code_fence, { desc = 'Toggle code fence' })
