@@ -257,6 +257,7 @@ return {
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[s]earch [h]elp Tag' })
       vim.keymap.set('n', '<leader>sH', '<cmd>Telescope helpgrep<CR>', { desc = '[s]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[s]earch [k]eymaps' })
+      vim.keymap.set('n', '<leader>sj', builtin.jumplist, { desc = '[s]earch [j]umplist' })
       vim.keymap.set('n', '<leader>sF', function()
         builtin.find_files { hidden = true }
       end, { desc = '[s]earch [F]iles' })
