@@ -18,6 +18,9 @@ vim.keymap.set('n', '<leader>wt', '<cmd>tab split<CR>', { desc = 'Create new [T]
 
 -- others
 vim.keymap.set('n', '<leader>;', ':', { desc = 'enter command mode' })
+vim.keymap.set('n', '<leader>J', function()
+  require('custom.findref').open_file_line()
+end, { desc = '[J]ump to file:line under cursor' })
 vim.keymap.set('n', '<C-q>', '<cmd>q<CR>', { desc = 'Close window' })
 vim.keymap.set('i', '<C-q>', '<Esc><cmd>q<CR>', { desc = 'Close window' })
 vim.keymap.set('n', '<leader>h', '<cmd>LspClangdSwitchSourceHeader<CR>', { noremap = true, silent = true })
