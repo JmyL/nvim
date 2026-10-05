@@ -39,6 +39,7 @@
   "obsidian.nvim": { "branch": "main", "commit": "ae1f76a75c7ce36866e1d9342a8f6f5b9c2caf9b" },
   "oil.nvim": { "branch": "master", "commit": "b73018b75affd13fa38e2fc94ef753b465f770d7" },
   "plenary.nvim": { "branch": "master", "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b" },
+  "proto-fieldnum-nvim": { "branch": "main", "commit": "e5cac473a11fb9dc17e83733329700fc8fa8ddb3" },
   "remote-nvim.nvim": { "branch": "fix/pty-argument", "commit": "495c046d7690f09f76fd811ea0fd1cab658ce9ff" },
   "render-markdown.nvim": { "branch": "main", "commit": "640a3ec6d538bad17c328be373c7cad0293d9589" },
   "smart-splits.nvim": { "branch": "master", "commit": "ec76708f1617ef9e2ac353357fe52d2c997a0f06" },
