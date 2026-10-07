@@ -17,6 +17,7 @@ return {
 
       ui = {
         enable = true,
+        ignore_conceal_warn = true,
       },
 
       callbacks = {
@@ -95,7 +96,9 @@ return {
         callback = function(args)
           local name = vim.api.nvim_buf_get_name(args.buf)
           if name ~= '' and name:find('^' .. vim.pesc(vault_root) .. '/') then
-            vim.opt_local.conceallevel = 2
+            -- Show markdown markers (**, *, `, ==, [[) as-is; bold/italic/code
+            -- styling still applies via treesitter and obsidian UI highlights.
+            vim.opt_local.conceallevel = 0
           end
         end,
       })
