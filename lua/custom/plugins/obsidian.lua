@@ -64,6 +64,7 @@ return {
       vim.keymap.set({ 'n', 'v' }, '<leader>od', '<cmd>Obsidian today<CR>', { desc = "open to[d]ay's rote" })
       vim.keymap.set({ 'n', 'v' }, '<leader>oy', '<cmd>Obsidian yesterday<CR>', { desc = "open [y]esterday's rote" })
       vim.keymap.set({ 'n', 'v' }, '<leader>om', '<cmd>Obsidian tomorrow<CR>', { desc = "open to[m]orrow's rote" })
+      vim.keymap.set({ 'n', 'v' }, '<leader>oD', '<cmd>Obsidian dailies<CR>', { desc = 'open [D]ailies picker' })
       vim.keymap.set({ 'n', 'v' }, '<leader>ov', '<cmd>Obsidian toc<CR>', { desc = 'open TOC [v]iew' })
       vim.keymap.set({ 'n', 'v' }, '<leader>oi', function()
         snack_input_and_execute('Enter image name:', 'Obsidian paste_img')
