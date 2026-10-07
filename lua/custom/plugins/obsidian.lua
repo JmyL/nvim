@@ -16,7 +16,16 @@ return {
       legacy_commands = false,
 
       ui = {
-        enable = false, -- set to false to disable all additional syntax features
+        enable = true,
+      },
+
+      callbacks = {
+        post_setup = function()
+          local state = _G.Obsidian
+          for _, workspace in ipairs(state and state.workspaces or {}) do
+            require('obsidian.ui').setup(workspace, state.opts.ui)
+          end
+        end,
       },
 
       workspaces = {
@@ -78,6 +87,18 @@ return {
       vim.keymap.set({ 'v' }, '<leader>oe', function()
         snack_input_and_execute('Enter title for extracted note:', 'Obsidian extract_note')
       end, { desc = '[e]xtract note' })
+
+      local vault_root = vim.fs.normalize '~/Documents/Obsidian'
+      vim.api.nvim_create_autocmd('FileType', {
+        group = vim.api.nvim_create_augroup('obsidian_vault', { clear = true }),
+        pattern = 'markdown',
+        callback = function(args)
+          local name = vim.api.nvim_buf_get_name(args.buf)
+          if name ~= '' and name:find('^' .. vim.pesc(vault_root) .. '/') then
+            vim.opt_local.conceallevel = 2
+          end
+        end,
+      })
     end,
   },
 }

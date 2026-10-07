@@ -20,6 +20,14 @@ return {
     ---@module 'render-markdown'
     ---@type render.md.UserConfig
     opts = {
+      ignore = function(buf)
+        local name = vim.api.nvim_buf_get_name(buf)
+        if name == '' then
+          return false
+        end
+        local vault = vim.fs.normalize '~/Documents/Obsidian'
+        return name:find('^' .. vim.pesc(vault) .. '/') ~= nil
+      end,
       completions = { blink = { enabled = true } },
       file_types = { 'markdown', 'codecompanion' },
       html = {
