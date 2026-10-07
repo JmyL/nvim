@@ -208,6 +208,20 @@ return {
           grep_string = {
             additional_args = hidden_grep_args,
           },
+          buffers = {
+            mappings = {
+              i = {
+                ['<C-x>'] = 'delete_buffer',
+                ['<C-v>'] = false,
+                ['<C-t>'] = false,
+              },
+              n = {
+                ['<C-x>'] = 'delete_buffer',
+                ['<C-v>'] = false,
+                ['<C-t>'] = false,
+              },
+            },
+          },
         },
         extensions = {
           ['ui-select'] = {
