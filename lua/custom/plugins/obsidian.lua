@@ -1,6 +1,6 @@
 return {
   {
-    'epwalsh/obsidian.nvim',
+    'obsidian-nvim/obsidian.nvim',
     version = '*', -- recommended, use latest release instead of latest commit
     lazy = false,
     -- ft = "markdown",
@@ -12,13 +12,9 @@ return {
     --   "BufReadPre path/to/my-vault/*.md",
     --   "BufNewFile path/to/my-vault/*.md",
     -- },
-    dependencies = {
-      -- Required.
-      'nvim-lua/plenary.nvim',
-
-      -- see below for full list of optional dependencies 👇
-    },
     opts = {
+      legacy_commands = false,
+
       ui = {
         enable = false, -- set to false to disable all additional syntax features
       },
@@ -50,36 +46,36 @@ return {
           end
         end)
       end
-      vim.keymap.set({ 'n', 'v' }, '<leader>oo', '<cmd>cd ~/Documents/Obsidian<CR> <cmd>ObsidianOpen<CR>', { desc = '[o]pen obsidian' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>oo', '<cmd>cd ~/Documents/Obsidian<CR> <cmd>Obsidian open<CR>', { desc = '[o]pen obsidian' })
       vim.keymap.set({ 'n', 'v' }, '<leader>oq', '<cmd>cd -<CR>', { desc = '[q]uit obsidian' })
 
-      vim.keymap.set({ 'n', 'v' }, '<leader>ox', '<cmd>ObsidianToggleCheckbox<CR>', { desc = 'toggle checkbo[x]' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>ox', '<cmd>Obsidian toggle_checkbox<CR>', { desc = 'toggle checkbo[x]' })
       vim.keymap.set({ 'n' }, '<leader>oc', function()
-        snack_input_and_execute('Enter title for new note:', 'ObsidianNew')
+        snack_input_and_execute('Enter title for new note:', 'Obsidian new')
       end, { desc = '[c]reate new note' })
-      vim.keymap.set({ 'v' }, '<leader>oc', '<cmd>ObsidianLink<CR>', { desc = '[c]onnect' })
-      vim.keymap.set({ 'v' }, '<leader>oC', '<cmd>ObsidianLinkNew<CR>', { desc = '[C]reate and connect' })
-      vim.keymap.set({ 'n', 'v' }, '<leader>oa', '<cmd>ObsidianTemplate<CR>', { desc = '[a]pply template' })
-      vim.keymap.set({ 'n', 'v' }, '<leader>os', '<cmd>ObsidianSearch<CR>', { desc = '[s]earch note' })
-      vim.keymap.set({ 'n', 'v' }, '<leader>of', '<cmd>ObsidianQuickSwitch<CR>', { desc = '[f]ind note' })
-      vim.keymap.set({ 'n', 'v' }, '<leader>ol', '<cmd>ObsidianLinks<CR>', { desc = 'show [l]ink' })
-      vim.keymap.set({ 'n', 'v' }, '<leader>ob', '<cmd>ObsidianBacklinks<CR>', { desc = '[b]acklinks' })
-      vim.keymap.set({ 'n', 'v' }, '<leader>ot', '<cmd>ObsidianTags<CR>', { desc = '[t]ags picker' })
-      vim.keymap.set({ 'n', 'v' }, '<leader>od', '<cmd>ObsidianToday<CR>', { desc = "open to[d]ay's rote" })
-      vim.keymap.set({ 'n', 'v' }, '<leader>oy', '<cmd>ObsidianYesterday<CR>', { desc = "open [y]esterday's rote" })
-      vim.keymap.set({ 'n', 'v' }, '<leader>om', '<cmd>ObsidianTomorrow<CR>', { desc = "open to[m]orrow's rote" })
-      vim.keymap.set({ 'n', 'v' }, '<leader>ov', '<cmd>ObsidianTOC<CR>', { desc = 'open TOC [v]iew' })
+      vim.keymap.set({ 'v' }, '<leader>oc', '<cmd>Obsidian link<CR>', { desc = '[c]onnect' })
+      vim.keymap.set({ 'v' }, '<leader>oC', '<cmd>Obsidian link_new<CR>', { desc = '[C]reate and connect' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>oa', '<cmd>Obsidian template<CR>', { desc = '[a]pply template' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>os', '<cmd>Obsidian search<CR>', { desc = '[s]earch note' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>of', '<cmd>Obsidian quick_switch<CR>', { desc = '[f]ind note' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>ol', '<cmd>Obsidian links<CR>', { desc = 'show [l]ink' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>ob', '<cmd>Obsidian backlinks<CR>', { desc = '[b]acklinks' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>ot', '<cmd>Obsidian tags<CR>', { desc = '[t]ags picker' })
+      vim.keymap.set({ 'n', 'v' }, '<leader>od', '<cmd>Obsidian today<CR>', { desc = "open to[d]ay's rote" })
+      vim.keymap.set({ 'n', 'v' }, '<leader>oy', '<cmd>Obsidian yesterday<CR>', { desc = "open [y]esterday's rote" })
+      vim.keymap.set({ 'n', 'v' }, '<leader>om', '<cmd>Obsidian tomorrow<CR>', { desc = "open to[m]orrow's rote" })
+      vim.keymap.set({ 'n', 'v' }, '<leader>ov', '<cmd>Obsidian toc<CR>', { desc = 'open TOC [v]iew' })
       vim.keymap.set({ 'n', 'v' }, '<leader>oi', function()
-        snack_input_and_execute('Enter image name:', 'ObsidianPasteImg')
+        snack_input_and_execute('Enter image name:', 'Obsidian paste_img')
       end, { desc = 'paste [i]mage' })
       vim.keymap.set({ 'n', 'v' }, '<leader>or', function()
-        snack_input_and_execute('Enter new name or --dry-run:', 'ObsidianRename')
+        snack_input_and_execute('Enter new name or --dry-run:', 'Obsidian rename')
       end, { desc = '[r]ename note' })
       vim.keymap.set({ 'n', 'v' }, '<leader>ow', function()
-        snack_input_and_execute('Enter workspace name:', 'ObsidianWorkspace')
+        snack_input_and_execute('Enter workspace name:', 'Obsidian workspace')
       end, { desc = 'switch [w]orkspace' })
       vim.keymap.set({ 'v' }, '<leader>oe', function()
-        snack_input_and_execute('Enter title for extracted note:', 'ObsidianExtractNote')
+        snack_input_and_execute('Enter title for extracted note:', 'Obsidian extract_note')
       end, { desc = '[e]xtract note' })
     end,
   },
