@@ -52,6 +52,7 @@ return {
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
       local builtin = require 'telescope.builtin'
+      local previewers = require 'telescope.previewers'
       local lga_actions = require 'telescope-live-grep-args.actions'
       local hidden_grep_args = { '--hidden', '--glob', '!.git/' }
       local vimgrep_arguments = vim.deepcopy(require('telescope.config').values.vimgrep_arguments)
@@ -140,6 +141,30 @@ return {
       pcall(require('telescope').load_extension, 'helpgrep')
       pcall(require('telescope').load_extension, 'live_grep_args')
 
+      -- Buffer previewer showing `git diff <base>...HEAD -- <file>` instead of
+      -- the file contents. Used by <leader>sc so the preview matches the
+      -- changed-file list (same `base...HEAD` range as custom.git-base).
+      local function diff_previewer(base)
+        return previewers.new_buffer_previewer {
+          title = ('Diff vs %s'):format(base),
+          define_preview = function(self, entry)
+            vim.system({ 'git', 'diff', '--no-ext-diff', '--no-color', base .. '...HEAD', '--', entry.value }, { text = true }, function(res)
+              vim.schedule(function()
+                if not (self.state and vim.api.nvim_buf_is_valid(self.state.bufnr)) then
+                  return
+                end
+                local out = vim.split(res.stdout or '', '\n', { trimempty = true })
+                if #out == 0 then
+                  out = { '(no diff vs ' .. base .. ')' }
+                end
+                vim.bo[self.state.bufnr].filetype = 'diff'
+                vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, out)
+              end)
+            end)
+          end,
+        }
+      end
+
       -- See `:help telescope.builtin`
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[s]earch [h]elp Tag' })
       vim.keymap.set('n', '<leader>sH', '<cmd>Telescope helpgrep<CR>', { desc = '[s]earch [H]elp' })
@@ -159,6 +184,7 @@ return {
         builtin.find_files {
           prompt_title = ('Changed files vs %s'):format(base_branch),
           find_command = { 'git', 'diff', '--name-only', '--diff-filter=ACMRTUXB', base_branch .. '...HEAD' },
+          previewer = diff_previewer(base_branch),
         }
       end, { desc = '[s]earch changed files vs [g]it base' })
       vim.keymap.set('n', '<leader>so', builtin.builtin, { desc = '[s]earch with another [o]ption' })
