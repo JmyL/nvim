@@ -59,6 +59,27 @@ return {
         map('n', '<leader>gD', function()
           gitsigns.diffthis '@'
         end, { desc = '[G]it [D]iff against last commit' })
+
+        -- Base-diff mode: gutter signs, ]c/[c, hunk preview and diffthis
+        -- then show/compare against the branch base (same detection as
+        -- <leader>sc) instead of the index. diffthis() follows the base;
+        -- gD stays pinned to the last commit.
+        map('n', '<leader>gc', function()
+          if vim.b.gitsigns_base then
+            gitsigns.reset_base()
+            vim.b.gitsigns_base = nil
+            vim.notify('gitsigns: base mode off (diff vs index)', vim.log.levels.INFO)
+          else
+            local base = require('custom.git-base').detect()
+            if not base then
+              vim.notify('Could not detect a base branch for current HEAD', vim.log.levels.WARN)
+              return
+            end
+            gitsigns.change_base(base, false)
+            vim.b.gitsigns_base = base
+            vim.notify(('gitsigns: base mode on (diff vs %s)'):format(base), vim.log.levels.INFO)
+          end
+        end, { desc = 'Toggle [G]it [c]ompare with base' })
         -- Toggles
         map('n', '<leader>gB', gitsigns.toggle_current_line_blame, { desc = 'Toggle [G]it show [B]lame line' })
         map('n', '<leader>gv', gitsigns.preview_hunk_inline, { desc = 'Toggle [G]it show [D]eleted' })

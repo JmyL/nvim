@@ -98,6 +98,19 @@ return {
         desc = '[G]it [l]og --oneline',
       },
       { '<leader>gb', ':Git blame --date=short --abbrev=6<CR>', desc = '[G]it [b]lame' },
+      {
+        '<leader>gC',
+        function()
+          -- Same detection as <leader>sc; shows the whole branch diff.
+          local base = require('custom.git-base').detect()
+          if not base then
+            vim.notify('Could not detect a base branch for current HEAD', vim.log.levels.WARN)
+            return
+          end
+          git_in(launch_cwd, ('++curwin diff %s...HEAD'):format(base))
+        end,
+        desc = '[G]it [C]hanges of branch vs base',
+      },
     },
     silent = true,
     config = function()
