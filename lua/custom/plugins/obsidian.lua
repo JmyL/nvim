@@ -47,12 +47,12 @@ return {
     init = function()
       local Snacks = require 'snacks'
 
-      local function snack_input_and_execute(prompt_text, command_prefix)
+      local function snack_input_and_execute(prompt_text, command_name)
         Snacks.input({
           prompt = prompt_text,
         }, function(input)
           if input and input ~= '' then
-            vim.cmd(command_prefix .. ' ' .. vim.fn.shellescape(input))
+            require('obsidian.commands').handle_command { fargs = { command_name, input }, range = 0 }
           end
         end)
       end
@@ -61,7 +61,7 @@ return {
 
       vim.keymap.set({ 'n', 'v' }, '<leader>ox', '<cmd>Obsidian toggle_checkbox<CR>', { desc = 'toggle checkbo[x]' })
       vim.keymap.set({ 'n' }, '<leader>oc', function()
-        snack_input_and_execute('Enter title for new note:', 'Obsidian new')
+        snack_input_and_execute('Enter title for new note:', 'new')
       end, { desc = '[c]reate new note' })
       vim.keymap.set({ 'v' }, '<leader>oc', '<cmd>Obsidian link<CR>', { desc = '[c]onnect' })
       vim.keymap.set({ 'v' }, '<leader>oC', '<cmd>Obsidian link_new<CR>', { desc = '[C]reate and connect' })
@@ -77,16 +77,16 @@ return {
       vim.keymap.set({ 'n', 'v' }, '<leader>oD', '<cmd>Obsidian dailies<CR>', { desc = 'open [D]ailies picker' })
       vim.keymap.set({ 'n', 'v' }, '<leader>ov', '<cmd>Obsidian toc<CR>', { desc = 'open TOC [v]iew' })
       vim.keymap.set({ 'n', 'v' }, '<leader>oi', function()
-        snack_input_and_execute('Enter image name:', 'Obsidian paste_img')
+        snack_input_and_execute('Enter image name:', 'paste_img')
       end, { desc = 'paste [i]mage' })
       vim.keymap.set({ 'n', 'v' }, '<leader>or', function()
-        snack_input_and_execute('Enter new name or --dry-run:', 'Obsidian rename')
+        snack_input_and_execute('Enter new name or --dry-run:', 'rename')
       end, { desc = '[r]ename note' })
       vim.keymap.set({ 'n', 'v' }, '<leader>ow', function()
-        snack_input_and_execute('Enter workspace name:', 'Obsidian workspace')
+        snack_input_and_execute('Enter workspace name:', 'workspace')
       end, { desc = 'switch [w]orkspace' })
       vim.keymap.set({ 'v' }, '<leader>oe', function()
-        snack_input_and_execute('Enter title for extracted note:', 'Obsidian extract_note')
+        snack_input_and_execute('Enter title for extracted note:', 'extract_note')
       end, { desc = '[e]xtract note' })
 
       local vault_root = vim.fs.normalize '~/Documents/Obsidian'
