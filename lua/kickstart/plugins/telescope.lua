@@ -83,6 +83,7 @@ return {
             additional_args = hidden_grep_args,
           },
           buffers = {
+            sort_mru = true, -- show recently used buffers first
             mappings = {
               i = {
                 ['<C-x>'] = 'delete_buffer',
