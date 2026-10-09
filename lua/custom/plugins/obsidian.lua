@@ -89,17 +89,13 @@ return {
         snack_input_and_execute('Enter title for extracted note:', 'extract_note')
       end, { desc = '[e]xtract note' })
 
-      local vault_root = vim.fs.normalize '~/Documents/Obsidian'
       vim.api.nvim_create_autocmd('FileType', {
-        group = vim.api.nvim_create_augroup('obsidian_vault', { clear = true }),
+        group = vim.api.nvim_create_augroup('markdown_conceal', { clear = true }),
         pattern = 'markdown',
-        callback = function(args)
-          local name = vim.api.nvim_buf_get_name(args.buf)
-          if name ~= '' and name:find('^' .. vim.pesc(vault_root) .. '/') then
-            -- Show markdown markers (**, *, `, ==, [[) as-is; bold/italic/code
-            -- styling still applies via treesitter and obsidian UI highlights.
-            vim.opt_local.conceallevel = 0
-          end
+        callback = function()
+          -- Show markdown markers (**, *, `, ==, [[, #, -) as-is in every markdown
+          -- buffer; bold/italic/code styling still applies via treesitter highlights.
+          vim.opt_local.conceallevel = 0
         end,
       })
     end,

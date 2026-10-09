@@ -151,7 +151,7 @@ return {
         opencode = function()
           return require('codecompanion.adapters').extend('opencode', {
             env = {
-              OPENAI_SYSTEM_PROMPT = "Never use Chinese characters (Hanja/漢字/한자)."
+              OPENAI_SYSTEM_PROMPT = 'Never use Chinese characters (Hanja/漢字/한자).',
             },
           })
         end,
@@ -196,7 +196,6 @@ return {
       'nvim-lua/plenary.nvim',
       'nvim-treesitter/nvim-treesitter',
       -- 'ravitemer/mcphub.nvim',
-      'MeanderingProgrammer/render-markdown.nvim',
       'j-hui/fidget.nvim',
       'ravitemer/codecompanion-history.nvim',
       -- {
