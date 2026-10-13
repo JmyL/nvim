@@ -78,7 +78,7 @@ return {
       vim.keymap.set({ 'n', 'v' }, '<leader>ov', '<cmd>Obsidian toc<CR>', { desc = 'open TOC [v]iew' })
       vim.keymap.set({ 'n', 'v' }, '<leader>og', function()
         require('custom.obsidian-gather').gather()
-      end, { desc = '[g]ather open issues/plans into daily' })
+      end, { desc = '[g]ather open issues/plans/todos into daily' })
       vim.keymap.set({ 'n', 'v' }, '<leader>oi', function()
         snack_input_and_execute('Enter image name:', 'paste_img')
       end, { desc = 'paste [i]mage' })

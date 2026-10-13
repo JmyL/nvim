@@ -1,7 +1,8 @@
--- Gather open issue/plan checkboxes from the most recent previous daily note
--- into today's daily note. Walks backwards day by day from yesterday; the
--- first daily file that has any `- [ ]` under `## Issues` or `## Plans` is the
--- source. Already-listed ids and `done-plan` notes are skipped.
+-- Gather open issue/plan checkboxes and the whole Todos section from the most
+-- recent previous daily note into today's daily note. Walks backwards day by
+-- day from yesterday; the first daily file that has any open `- [ ]` under
+-- `## Issues` / `## Plans`, or any `## Todos` content, is the source.
+-- Already-listed ids/texts and `done-plan` notes are skipped.
 local M = {}
 
 local function daily_path(vault, date)
@@ -16,10 +17,17 @@ local function prev_date(date)
   return os.date('%Y-%m-%d', os.time { year = tonumber(y), month = tonumber(m), day = tonumber(d), hour = 12 } - 86400)
 end
 
-local function section_of(line)
-  return line:match '^##%s+(Issues)%s*$' or line:match '^##%s+(Plans)%s*$'
+-- A heading that starts a new section: `# Title` / `## Title` with text.
+-- Bare `##` or `### Sub` lines do not end a section.
+local function is_heading(line)
+  return line:match '^##?%s+%S' ~= nil
 end
 
+local function section_of(line)
+  return line:match '^##%s+(Issues)%s*$' or line:match '^##%s+(Plans)%s*$' or line:match '^##%s+(Todos)%s*$'
+end
+
+-- Open `- [ ]` lines under Issues/Plans only. Todos is handled by full copy.
 local function open_items(lines)
   local items = {}
   local section
@@ -27,9 +35,9 @@ local function open_items(lines)
     local s = section_of(line)
     if s then
       section = s
-    elseif line:match '^#' then
+    elseif is_heading(line) then
       section = nil
-    elseif section then
+    elseif section and section ~= 'Todos' then
       local text = line:match '^%- %[[ ]%](.+)$'
       if text then
         items[#items + 1] = {
@@ -95,6 +103,50 @@ local function find_heading(lines, name)
   end
 end
 
+-- Body of a section with edge blank lines trimmed, or nil if absent/empty.
+local function section_body(lines, name)
+  local h = find_heading(lines, name)
+  if not h then
+    return nil
+  end
+  local body = {}
+  for i = h + 1, #lines do
+    if is_heading(lines[i]) then
+      break
+    end
+    body[#body + 1] = lines[i]
+  end
+  while #body > 0 and body[1] == '' do
+    table.remove(body, 1)
+  end
+  while #body > 0 and body[#body] == '' do
+    table.remove(body)
+  end
+  if #body == 0 then
+    return nil
+  end
+  return body
+end
+
+-- Index just after the last non-blank line of a section (before trailing
+-- blanks, the next heading, or EOF).
+local function section_end(lines, name)
+  local h = find_heading(lines, name)
+  if not h then
+    return nil
+  end
+  local e = h
+  for i = h + 1, #lines do
+    if is_heading(lines[i]) then
+      break
+    end
+    if lines[i]:match '%S' then
+      e = i
+    end
+  end
+  return e
+end
+
 local function insert_section(lines, name, texts)
   local h = find_heading(lines, name)
   if h then
@@ -115,6 +167,57 @@ local function insert_section(lines, name, texts)
   end
 end
 
+-- Copy source Todos body into today's Todos, skipping lines already present
+-- (by trimmed text), lines whose linked note id is already in today, and lines
+-- linked to a `done-plan` note. Creates the section when missing.
+local function append_todos(lines, body, seen_text, existing, vault, counts)
+  local h = find_heading(lines, 'Todos')
+  local inserted = {}
+  for _, line in ipairs(body) do
+    if line:match '^%s*$' then
+      if not h then
+        inserted[#inserted + 1] = line
+      end
+    else
+      local t = line:gsub('^%s+', ''):gsub('%s+$', '')
+      local id = t:match '%[%[([^|%]]-)|'
+      if seen_text[t] then
+        counts.n_dup = counts.n_dup + 1
+      elseif id and existing[id] then
+        counts.n_dup = counts.n_dup + 1
+      elseif id and is_done_plan(vault, id) then
+        counts.n_done = counts.n_done + 1
+      else
+        inserted[#inserted + 1] = line
+        if id then
+          existing[id] = true
+        end
+      end
+    end
+  end
+  if #inserted == 0 then
+    return 0
+  end
+  local e = section_end(lines, 'Todos')
+  if e then
+    for i = #inserted, 1, -1 do
+      table.insert(lines, e + 1, inserted[i])
+    end
+  else
+    while lines[#lines] == '' do
+      table.remove(lines)
+    end
+    if #lines > 0 and lines[#lines] ~= '' then
+      lines[#lines + 1] = ''
+    end
+    lines[#lines + 1] = '## Todos'
+    for _, l in ipairs(inserted) do
+      lines[#lines + 1] = l
+    end
+  end
+  return #inserted
+end
+
 function M.gather(opts)
   opts = opts or {}
   local vault = opts.vault or vim.fn.expand '~/Documents/Obsidian'
@@ -130,16 +233,18 @@ function M.gather(opts)
     end
     local path = daily_path(vault, date)
     if vim.uv.fs_stat(path) then
-      local items = open_items(vim.fn.readfile(path))
-      if #items > 0 then
-        source = { date = date, items = items }
+      local lines = vim.fn.readfile(path)
+      local items = open_items(lines)
+      local todos = section_body(lines, 'Todos')
+      if #items > 0 or todos then
+        source = { date = date, items = items, todos = todos }
         break
       end
     end
   end
 
   if not source then
-    vim.notify('obsidian-gather: no daily with open issue/plan found', vim.log.levels.INFO)
+    vim.notify('obsidian-gather: no daily with open issue/plan/todo found', vim.log.levels.INFO)
     return
   end
 
@@ -156,19 +261,28 @@ function M.gather(opts)
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 
   local existing = {}
+  local seen_text = {}
   for _, line in ipairs(lines) do
     for id in line:gmatch '%[%[([^|%]]*)|' do
       existing[id] = true
     end
+    local t = line:gsub('^%s+', ''):gsub('%s+$', '')
+    if t ~= '' then
+      seen_text[t] = true
+      local content = t:match '^%- %[[ x]%]%s*(.+)$' or t:match '^%-%s+(.+)$'
+      if content then
+        seen_text[content] = true
+      end
+    end
   end
 
+  local counts = { n_dup = 0, n_done = 0 }
   local by_section = { Issues = {}, Plans = {} }
-  local n_dup, n_done = 0, 0
   for _, item in ipairs(source.items) do
-    if item.id and existing[item.id] then
-      n_dup = n_dup + 1
+    if (item.id and existing[item.id]) or seen_text[item.text] then
+      counts.n_dup = counts.n_dup + 1
     elseif is_done_plan(vault, item.id) then
-      n_done = n_done + 1
+      counts.n_done = counts.n_done + 1
     else
       local texts = by_section[item.section]
       texts[#texts + 1] = item.text
@@ -185,10 +299,13 @@ function M.gather(opts)
       n_added = n_added + #by_section[name]
     end
   end
+  if source.todos then
+    n_added = n_added + append_todos(lines, source.todos, seen_text, existing, vault, counts)
+  end
 
   if n_added == 0 then
     vim.notify(
-      ('obsidian-gather: %s had %d open item(s), all already in today (%d done-plan skipped)'):format(source.date, #source.items, n_done),
+      ('obsidian-gather: %s had %d open item(s), all already in today (%d done-plan skipped)'):format(source.date, #source.items, counts.n_done),
       vim.log.levels.INFO
     )
     return
@@ -197,7 +314,7 @@ function M.gather(opts)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.cmd 'silent write'
   vim.notify(
-    ('obsidian-gather: added %d item(s) from %s (%d already in today, %d done-plan skipped)'):format(n_added, source.date, n_dup, n_done),
+    ('obsidian-gather: added %d item(s) from %s (%d already in today, %d done-plan skipped)'):format(n_added, source.date, counts.n_dup, counts.n_done),
     vim.log.levels.INFO
   )
 end
