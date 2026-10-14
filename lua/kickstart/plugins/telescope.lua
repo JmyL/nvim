@@ -188,6 +188,184 @@ return {
           previewer = diff_previewer(base_branch),
         }
       end, { desc = '[s]earch changed files vs [g]it base' })
+
+      -- Previewer for <leader>sl: shows the diff matching each entry's git
+      -- status. Staged entries diff index-vs-HEAD (`--cached`), unstaged diff
+      -- worktree-vs-index, untracked files show their raw content.
+      local function status_previewer()
+        return previewers.new_buffer_previewer {
+          title = 'Change preview',
+          define_preview = function(self, entry)
+            vim.schedule(function()
+              if not (self.state and vim.api.nvim_buf_is_valid(self.state.bufnr)) then
+                return
+              end
+              local out
+              if entry.untracked then
+                local res = vim.system({ 'cat', entry.value }, { text = true }):wait()
+                if res.code == 0 then
+                  out = vim.split(res.stdout or '', '\n', { trimempty = true })
+                else
+                  out = { '(could not read file)' }
+                end
+              else
+                local cmds = {}
+                if entry.staged then
+                  cmds[#cmds + 1] = { 'git', 'diff', '--no-ext-diff', '--no-color', '--cached', '--', entry.value }
+                end
+                if entry.unstaged then
+                  cmds[#cmds + 1] = { 'git', 'diff', '--no-ext-diff', '--no-color', '--', entry.value }
+                end
+                out = {}
+                for _, cmd in ipairs(cmds) do
+                  local res = vim.system(cmd, { text = true }):wait()
+                  if res.code == 0 and (res.stdout or '') ~= '' then
+                    vim.list_extend(out, vim.split(res.stdout, '\n', { trimempty = true }))
+                  end
+                end
+                if #out == 0 then
+                  out = { '(no diff)' }
+                end
+              end
+              vim.bo[self.state.bufnr].filetype = 'diff'
+              vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, out)
+            end)
+          end,
+        }
+      end
+
+      -- List staged + unstaged + untracked files from `git status --porcelain`
+      -- and preview each one with the matching diff (see status_previewer).
+      vim.keymap.set('n', '<leader>sl', function()
+        local res = vim.system({ 'git', 'status', '--porcelain', '-z', '--untracked-files=all' }, { text = true }):wait()
+        if res.code ~= 0 then
+          vim.notify('git status failed (not a git repo?)', vim.log.levels.WARN)
+          return
+        end
+
+        local entries = {}
+        local by_path = {}
+        -- -z separates records with NUL; renames separate old/new with NUL too.
+        local fields = vim.split(res.stdout, '\0', { plain = true })
+        local i = 1
+        while i <= #fields do
+          local record = fields[i]
+          i = i + 1
+          if record ~= '' and #record >= 4 then
+            local xy = record:sub(1, 2)
+            local path = record:sub(4)
+            if xy:match '^R' or xy:match '^.R' then
+              -- With -z, rename records are `XY <new-path>\0<old-path>\0`:
+              -- the record already holds the new path, the next field the old one.
+              local old_path = fields[i]
+              i = i + 1
+              local new_path = path
+              local function add_rename(staged, unstaged)
+                local key = new_path .. '\0' .. tostring(staged) .. tostring(unstaged)
+                if not by_path[key] then
+                  by_path[key] = { value = new_path, path = new_path, staged = staged, unstaged = unstaged, rename = old_path }
+                  table.insert(entries, by_path[key])
+                end
+              end
+              local x, y = xy:sub(1, 1), xy:sub(2, 2)
+              if x ~= ' ' and x ~= '?' then
+                add_rename(true, false)
+              end
+              if y ~= ' ' and y ~= '?' then
+                add_rename(false, true)
+              end
+            else
+              local function add(staged, unstaged, untracked)
+                local key = path .. '\0' .. tostring(staged) .. tostring(unstaged) .. tostring(untracked)
+                if not by_path[key] then
+                  by_path[key] = { value = path, path = path, staged = staged, unstaged = unstaged, untracked = untracked }
+                  table.insert(entries, by_path[key])
+                end
+              end
+              if xy == '??' then
+                add(false, false, true)
+              else
+                local x, y = xy:sub(1, 1), xy:sub(2, 2)
+                local is_staged = x ~= ' ' and x ~= '?'
+                local is_unstaged = y ~= ' ' and y ~= '?'
+                if is_staged or is_unstaged then
+                  add(is_staged, is_unstaged, false)
+                end
+              end
+            end
+          end
+        end
+
+        if #entries == 0 then
+          vim.notify('No staged/unstaged changes', vim.log.levels.INFO)
+          return
+        end
+
+        local status_marks = {
+          M = 'M',
+          A = 'A',
+          D = 'D',
+          R = 'R',
+          C = 'C',
+          T = 'T',
+          U = 'U',
+        }
+        local pickers = require 'telescope.pickers'
+        local finders = require 'telescope.finders'
+        local actions_state = require 'telescope.actions.state'
+        local actions = require 'telescope.actions'
+        local conf = require('telescope.config').values
+
+        pickers
+          .new({}, {
+            prompt_title = 'Live & staged changes',
+            finder = finders.new_table {
+              results = entries,
+              entry_maker = function(e)
+                local marks = {}
+                if e.untracked then
+                  marks = { '??' }
+                else
+                  if e.staged then
+                    marks[#marks + 1] = 'S'
+                  end
+                  if e.unstaged then
+                    marks[#marks + 1] = 'W'
+                  end
+                end
+                local display = table.concat(marks, '/') .. ' ' .. e.value
+                if e.rename then
+                  display = display .. (' (from %s)'):format(e.rename)
+                end
+                return {
+                  value = e.value,
+                  path = e.path,
+                  ordinal = e.value,
+                  display = display,
+                  staged = e.staged,
+                  unstaged = e.unstaged,
+                  untracked = e.untracked,
+                }
+              end,
+            },
+            sorter = conf.generic_sorter {},
+            previewer = status_previewer(),
+            attach_mappings = function(_, map)
+              map('i', '<CR>', function(prompt_bufnr)
+                local selection = actions_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd.edit(vim.fn.fnameescape(selection.path))
+              end)
+              map('n', '<CR>', function(prompt_bufnr)
+                local selection = actions_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd.edit(vim.fn.fnameescape(selection.path))
+              end)
+              return true
+            end,
+          })
+          :find()
+      end, { desc = '[s]earch [l]ive & staged changes (git status)' })
       vim.keymap.set('n', '<leader>so', builtin.builtin, { desc = '[s]earch with another [o]ption' })
       vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[s]earch using [t]reesitter query' })
       vim.keymap.set('n', '<leader>sd', builtin.grep_string, { desc = '[s]earch current wor[d]' })
