@@ -1,6 +1,17 @@
 -- basic
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+
+-- buffer delete (keep window)
+vim.keymap.set('n', '<leader>bd', function()
+  Snacks.bufdelete()
+end, { desc = 'Delete [b]uffer, keep window' })
+vim.keymap.set('n', '<leader>bD', function()
+  Snacks.bufdelete { force = true }
+end, { desc = 'Force delete [b]uffer' })
+vim.keymap.set('n', '<leader>bo', function()
+  Snacks.bufdelete.other()
+end, { desc = 'Delete [o]ther buffers' })
 vim.keymap.set('t', '<Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 vim.keymap.set('n', '<leader>C', '"_c$', { noremap = true, silent = true })
 vim.keymap.set('n', '<leader>c', '"_c', { noremap = true, silent = true })
