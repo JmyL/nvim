@@ -174,7 +174,13 @@ return {
       vim.keymap.set('n', '<leader>sF', function()
         builtin.find_files { hidden = true }
       end, { desc = '[s]earch [F]iles' })
-      vim.keymap.set('n', '<leader>sf', builtin.git_files, { desc = '[s]earch [f]iles from git index' })
+      vim.keymap.set('n', '<leader>sf', function()
+        if vim.fs.root(vim.fn.getcwd(), '.git') then
+          builtin.git_files()
+        else
+          builtin.find_files { hidden = true }
+        end
+      end, { desc = '[s]earch [f]iles (git index, or all files outside git)' })
       vim.keymap.set('n', '<leader>sc', function()
         local base_branch = require('custom.git-base').detect()
         if not base_branch then
